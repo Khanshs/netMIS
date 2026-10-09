@@ -2,14 +2,20 @@
 
 Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ chức SmartDorm và các thực thể trong đặc tả. Mỗi class, interface và enum nằm trong một file riêng. Dữ liệu dùng List<T> trong bộ nhớ.
 
-## Mở project độc lập
+## Clone và mở bằng IntelliJ IDEA
 
-1. IntelliJ → File → Open → chọn `D:\OOP\NetCafeMIS\pom.xml` → Open as Project.
-2. Chọn Project SDK là JDK 8 hoặc mới hơn, language level 8, encoding UTF-8.
-3. Chạy `src/main/java/netcafe/Main.java` để xem dữ liệu mẫu.
-4. Chạy `src/main/java/netcafe/ExceptionDemo.java` để xem xử lý exception.
-5. Chạy `src/test/java/netcafe/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
-6. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
+1. Clone repo private bằng tài khoản GitHub có quyền truy cập:
+
+   ```powershell
+   git clone https://github.com/Khanshs/netMIS.git
+   ```
+
+2. Trong IntelliJ IDEA, chọn **File → Open**, chọn thư mục `netMIS` vừa clone (hoặc file `pom.xml` trong thư mục đó), rồi mở như một Maven project.
+3. Chọn Project SDK là JDK 8 hoặc mới hơn và dùng encoding UTF-8. Chờ IntelliJ import Maven xong.
+4. Chạy `src/main/java/netcafe/Main.java` để xem dữ liệu mẫu.
+5. Chạy `src/main/java/netcafe/ExceptionDemo.java` để xem xử lý exception.
+6. Chạy `src/test/java/netcafe/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
+7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 
 ## Cấu trúc
 

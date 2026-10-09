@@ -1,0 +1,7 @@
+R01 session=S01 computer=24000 service=25000 total=49000
+R02 session=S02 computer=30000 service=30000 total=60000
+Collected=49000
+S01 COMPLETED PC01
+S02 COMPLETED PC03
+S03 COMPLETED PC04
+S04 ACTIVE PC02

@@ -33,6 +33,11 @@ public final class NetCafe {
         return sessionService.openSession(id, account, computer, start);
     }
 
+    public Session openSession(String id, CustomerAccount account, Computer computer, LocalDateTime start,
+                               LocalDateTime plannedEndTime) {
+        return sessionService.openSession(id, account, computer, start, plannedEndTime);
+    }
+
     public void endSession(Session session, LocalDateTime end) {
         sessionService.endSession(session, end);
     }

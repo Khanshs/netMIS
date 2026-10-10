@@ -15,15 +15,26 @@ public final class Session implements Identifiable, Chargeable {
   private final CustomerAccount account;
   private final Computer computer;
   private final LocalDateTime timeStart;
+  // Optional estimate; billing and payment use the actual timeEnd.
+  private final LocalDateTime plannedEndTime;
   private LocalDateTime timeEnd;
   private SessionStatus sessionStatus;
 
   //Constructor
   public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
+    this(id, account, computer, start, null);
+  }
+
+  public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start,
+                 LocalDateTime plannedEndTime) {
     sessionId=Checks.id(id);
     this.account=Checks.required(account, "account");
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");
+    if (plannedEndTime != null && !plannedEndTime.isAfter(timeStart)) {
+      throw new InvalidTimeException("Planned end must be after start: " + sessionId);
+    }
+    this.plannedEndTime=plannedEndTime;
     sessionStatus=SessionStatus.ACTIVE;
   }
 
@@ -32,6 +43,7 @@ public final class Session implements Identifiable, Chargeable {
   public CustomerAccount getAccount() { return account; }
   public Computer getComputer() { return computer; }
   public LocalDateTime getTimeStart() { return timeStart; }
+  public LocalDateTime getPlannedEndTime() { return plannedEndTime; }
   public LocalDateTime getTimeEnd() { return timeEnd; }
   public SessionStatus getSessionStatus() { return sessionStatus; }
   public void complete(LocalDateTime end) {

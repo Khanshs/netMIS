@@ -47,7 +47,7 @@ Project sử dụng danh sách đối tượng Java trong bộ nhớ. Chạy l�
 | Thanh toán | Có một lần thu đủ tiền cho mỗi hóa đơn |
 | Doanh thu thực thu | Có tổng Payment.amount |
 | Exception và demo | Có |
-| Kiểm tra nghiệp vụ | Có ba chương trình kiểm tra độc lập |
+| Kiểm tra nghiệp vụ | Có bốn chương trình kiểm tra độc lập |
 | 30 truy vấn trong phần 4 đặc tả | Chưa viết code; đặc tả gốc nêu phần này là yêu cầu truy vấn chưa code |
 | Tìm kiếm, sửa, xóa toàn bộ danh mục qua một menu | Chưa có |
 | Lưu dữ liệu lâu dài, database | Chưa có |
@@ -75,6 +75,7 @@ NetCafeMIS/
     │   ├── Main.java
     │   ├── ExceptionDemo.java
     │   ├── DiscountDemo.java
+    │   ├── EarlyEndDemo.java
     │   ├── Identifiable.java
     │   ├── Chargeable.java
     │   ├── IDiscount.java
@@ -116,6 +117,7 @@ NetCafeMIS/
     └── test/java/netcafe/
         ├── NetCafeChecks.java
         ├── AccountChecks.java
+        ├── PlannedEndChecks.java
         └── DiscountChecks.java
 ```
 
@@ -130,9 +132,9 @@ Các thư mục `.idea`, `target` hoặc `out` phục vụ IDE và biên dịch.
 | Exception nghiệp vụ | 14 |
 | Interface | 3 |
 | Enum | 5 |
-| Main và hai demo | 3 |
-| Ba chương trình kiểm tra | 3 |
-| **Tổng** | **51** |
+| Main và ba demo | 4 |
+| Bốn chương trình kiểm tra | 4 |
+| **Tổng** | **53** |
 
 Số lượng này tính theo file Java, không tính các lớp nội bộ hoặc đối tượng ẩn danh trong chương trình kiểm tra. Nhiều file không tự chứng minh thiết kế tốt; cần xem mỗi file có trách nhiệm đủ rõ và phù hợp với quy mô bài hay không.
 
@@ -229,16 +231,17 @@ Giữ mã, tên và trạng thái nhân viên. Khi gọi món hoặc lập hóa 
 
 ### 5.5. Session
 
-Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm mã, tài khoản, máy, thời gian bắt đầu, thời gian kết thúc và trạng thái phiên. Khách được lấy qua getAccount().getCustomer().
+Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm mã, tài khoản, máy, thời gian bắt đầu, giờ kết thúc dự kiến tùy chọn plannedEndTime, giờ kết thúc thực tế timeEnd và trạng thái phiên. Khách được lấy qua getAccount().getCustomer().
 
 | Phương thức | Ý nghĩa |
 |---|---|
-| Constructor | Tạo phiên ACTIVE, thời gian kết thúc chưa có |
+| Constructor | Tạo phiên ACTIVE, timeEnd = null; plannedEndTime nếu có phải sau start |
+| `getPlannedEndTime()` | Lấy giờ kết thúc dự kiến; không dùng để chốt tiền hoặc kiểm tra thanh toán |
 | `complete(end)` | Kiểm tra phiên đang hoạt động và end sau start, rồi hoàn tất phiên |
 | `amountAt(at)` | Tạm tính tiền máy gốc đến thời điểm at; không chấp nhận at trước start |
 | `calculateAmount()` | Tính tiền máy gốc đến thời điểm kết thúc; yêu cầu phiên đã hoàn tất |
 
-Session tính tiền máy theo thời gian và giá khu. Việc đổi trạng thái máy, kiểm tra các lần gọi món và kiểm tra lịch sử nằm ở SessionService. Chỉ gọi `Session.complete()` trực tiếp sẽ không thực hiện đủ những kiểm tra đó.
+Session tính tiền máy theo thời gian thực tế và giá khu. plannedEndTime không tự đóng phiên và không cấm nghỉ sớm hoặc chơi quá giờ. Việc đổi trạng thái máy, kiểm tra các lần gọi món và kiểm tra lịch sử nằm ở SessionService. Chỉ gọi `Session.complete()` trực tiếp sẽ không thực hiện đủ những kiểm tra đó.
 
 ### 5.6. Food
 
@@ -697,20 +700,25 @@ Tạo ba lớp con trong một mảng Customer[], mỗi khách dùng máy một 
 
 Minh họa mã khách trùng, lập hóa đơn cho phiên ACTIVE và thanh toán sai tiền. Bắt lỗi cụ thể rồi in thông báo. Các thao tác bị từ chối không làm tăng tiền thực thu trong ví dụ.
 
-### 14.4. NetCafeChecks, DiscountChecks và AccountChecks
+### 14.3.1. EarlyEndDemo
 
-Ba class kiểm tra độc lập bằng main, không dùng JUnit.
+Minh họa khách đăng ký 3h–5h rồi nghỉ lúc 4h30. Phiên giữ plannedEndTime = 5h, timeEnd thực tế = 4h30; tiền máy 90 phút ở giá 20.000đ/giờ là 30.000đ. Thanh toán lúc 4h30 thành công. Giờ dự kiến không tự đóng phiên và không thay thế giờ thực tế.
+
+### 14.4. Các chương trình kiểm tra độc lập
+
+Bốn class kiểm tra độc lập bằng main, không dùng JUnit.
 
 | Chương trình | Nội dung chính | Số kiểm tra trong lần rà soát |
 |---|---|---:|
 | NetCafeChecks | Dữ liệu mẫu, trạng thái, mã, thời gian, gọi món, hóa đơn, thanh toán | 43 |
 | DiscountChecks | Ba lớp con, tỷ lệ, làm tròn, hóa đơn chốt, thanh toán sau giảm và tỷ lệ sai | 42 |
 | AccountChecks | Dữ liệu tài khoản, đăng ký, username, trạng thái và lịch sử phiên theo tài khoản | 54 |
-| **Tổng** | | **139** |
+| PlannedEndChecks | Giờ dự kiến, nghỉ sớm/đúng giờ/quá giờ, tiền thực tế và điều kiện thanh toán | 52 |
+| **Tổng** | | **191** |
 
 DiscountChecks có TestCustomer nội bộ để giả lập tỷ lệ không hợp lệ hoặc thay đổi, phục vụ kiểm tra; nó không phải một hạng khách thứ tư dùng trong ứng dụng.
 
-Số kiểm tra là số lần gọi hàm kiểm tra của ba chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
+Số kiểm tra là số lần gọi hàm kiểm tra của bốn chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
 
 ## 15. Cách mở và kiểm chứng
 
@@ -719,8 +727,8 @@ Số kiểm tra là số lần gọi hàm kiểm tra của ba chương trình, k
 1. Open `D:\OOP\NetCafeMIS\pom.xml` như một project riêng.
 2. Chọn JDK phù hợp; mã nguồn hướng tới Java 8.
 3. Đảm bảo encoding UTF-8.
-4. Chạy Main, DiscountDemo, ExceptionDemo theo mục đích.
-5. Chạy main của NetCafeChecks, DiscountChecks và AccountChecks để kiểm tra.
+4. Chạy Main, DiscountDemo, ExceptionDemo hoặc EarlyEndDemo theo mục đích.
+5. Chạy main của NetCafeChecks, DiscountChecks, AccountChecks và PlannedEndChecks để kiểm tra.
 
 ### 15.2. PowerShell
 
@@ -732,6 +740,8 @@ Set-Location 'D:\OOP\NetCafeMIS'
 .\run.ps1 -Checks
 .\run.ps1 -DiscountChecks
 .\run.ps1 -AccountChecks
+.\run.ps1 -EarlyEndDemo
+.\run.ps1 -PlannedEndChecks
 ```
 
 run.ps1 tìm JDK từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ, biên dịch nguồn và chạy class được chọn. Có thể truyền `-JavaHome 'C:\duong-dan-jdk'`.
@@ -743,11 +753,11 @@ mvn package
 java -jar target/netcafe-mis-1.0.0.jar
 ```
 
-pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy ba chương trình kiểm tra bằng main.
+pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy bốn chương trình kiểm tra bằng main.
 
 ### 15.4. Bằng chứng của lần rà soát này
 
-Đã chạy Maven 3.9.9 clean package trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo và ExceptionDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua.
+Đã chạy Maven 3.9.9 package trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, PlannedEndChecks báo 52 kiểm tra qua.
 
 Ví dụ Java hoàn chỉnh ở mục 13 cũng đã được trích từ tài liệu, biên dịch và chạy riêng; cả tổng hóa đơn và thực thu đều là 135600 như phần giải thích.
 
@@ -848,7 +858,7 @@ Hai main kiểm tra có giá trị, đã phát hiện và xác nhận nhiều qu
 
 ### 17.7. Số class có quá nhiều không?
 
-51 file Java gồm 14 exception ngắn, 5 enum, 3 interface và 6 demo/kiểm tra. Không nên đánh đồng số file với số nghiệp vụ phức tạp.
+53 file Java gồm 14 exception ngắn, 5 enum, 3 interface và 8 file Main/demo/kiểm tra. Không nên đánh đồng số file với số nghiệp vụ phức tạp.
 
 Nhóm model theo ERD và ba lớp con khách có lý do rõ ràng. Nhóm dễ giảm nhất là lớp điều phối và các lớp chuyển tiếp. Mình sẽ ưu tiên **hiểu luồng, bảo vệ trạng thái và giảm việc phải nhảy file**, thay vì cố thêm mẫu thiết kế để tăng số class.
 

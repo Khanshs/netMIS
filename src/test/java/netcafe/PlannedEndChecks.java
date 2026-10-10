@@ -1,0 +1,149 @@
+package netcafe;
+
+import netcafe.Service.NetCafe;
+import netcafe.enums.*;
+import netcafe.exception.*;
+import netcafe.model.*;
+import netcafe.model.customer.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/** Planned times never replace actual completion times for billing or payment. */
+public final class PlannedEndChecks {
+    private static int checks;
+    private static final LocalDateTime START = LocalDateTime.of(2026, 10, 5, 3, 0);
+    private static final LocalDateTime PLANNED_END = START.plusHours(2);
+
+    private static void equal(Object expected, Object actual) {
+        checks++;
+        if (!String.valueOf(expected).equals(String.valueOf(actual))) {
+            throw new AssertionError("Expected " + expected + ", got " + actual);
+        }
+    }
+
+    private static void fails(Class<? extends RuntimeException> type, Runnable action) {
+        checks++;
+        try { action.run(); }
+        catch (RuntimeException failure) {
+            if (type.isInstance(failure)) return;
+            throw new AssertionError("Expected " + type.getSimpleName(), failure);
+        }
+        throw new AssertionError("Expected " + type.getSimpleName());
+    }
+
+    private static final class Fixture {
+        final NetCafe cafe = new NetCafe();
+        final ComputerSection section = new ComputerSection("CS01", "Demo", BigDecimal.valueOf(20000));
+        final Computer computer = new Computer("PC01", section, ComputerStatus.AVAILABLE);
+        final Employee employee = new Employee("E01", "Cashier", EmployeeStatus.ACTIVE);
+        final CustomerAccount account;
+
+        Fixture(Customer customer) {
+            account = new CustomerAccount("A01", "test", "test-hash", BigDecimal.ZERO, AccountStatus.ACTIVE, customer);
+            cafe.addSection(section);
+            cafe.addComputer(computer);
+            cafe.addCustomer(customer);
+            cafe.addAccount(account);
+            cafe.addEmployee(employee);
+        }
+
+        Session open() {
+            return cafe.openSession("S01", account, computer, START, PLANNED_END);
+        }
+    }
+
+    public static void main(String[] args) {
+        Fixture early = new Fixture(new NormalCustomer("C01", "Normal"));
+        fails(InvalidTimeException.class, () -> early.cafe.openSession("S01", early.account, early.computer, START, START));
+        fails(InvalidTimeException.class, () -> early.cafe.getSessionService().openSession("S01", early.account, early.computer, START, START.minusMinutes(1)));
+        equal(0, early.cafe.getSessions().size());
+        equal(ComputerStatus.AVAILABLE, early.computer.getComputerStatus());
+        fails(InvalidTimeException.class, () -> new Session("S01", early.account, early.computer, START, START));
+        equal(null, new Session("OLD", early.account, early.computer, START).getPlannedEndTime());
+        equal(null, Main.sample().getSessions().get(0).getPlannedEndTime());
+
+        Session session = early.open();
+        equal(PLANNED_END, session.getPlannedEndTime());
+        equal(null, session.getTimeEnd());
+        equal(SessionStatus.ACTIVE, session.getSessionStatus());
+        equal(ComputerStatus.IN_USE, early.computer.getComputerStatus());
+        fails(SessionStateException.class, () -> early.cafe.issueReceipt("R01", session, early.employee));
+        equal(0, early.cafe.getReceipts().size());
+        Receipt premature = new Receipt("UNREGISTERED", session, early.employee, BigDecimal.ZERO, BigDecimal.ZERO);
+        fails(SessionStateException.class, () -> new Payment("P01", premature, PLANNED_END, PaymentMethod.CASH, BigDecimal.ZERO));
+        // Passing the estimate does not complete the session automatically.
+        equal(40333, session.amountAt(PLANNED_END.plusMinutes(1)));
+        equal(null, session.getTimeEnd());
+        equal(SessionStatus.ACTIVE, session.getSessionStatus());
+
+        LocalDateTime actualEnd = START.plusMinutes(90);
+        early.cafe.endSession(session, actualEnd);
+        equal(actualEnd, session.getTimeEnd());
+        equal(PLANNED_END, session.getPlannedEndTime());
+        equal(SessionStatus.COMPLETED, session.getSessionStatus());
+        equal(ComputerStatus.AVAILABLE, early.computer.getComputerStatus());
+        Receipt receipt = early.cafe.issueReceipt("R01", session, early.employee);
+        equal(30000, receipt.getGrossComputerAmount());
+        equal(30000, receipt.getTotalAmount());
+        fails(InvalidTimeException.class, () -> early.cafe.pay("P01", receipt, actualEnd.minusMinutes(1), PaymentMethod.CASH, receipt.getTotalAmount()));
+        equal(0, early.cafe.getPayments().size());
+        equal(0, early.cafe.collectedAmount());
+        Payment payment = early.cafe.pay("P01", receipt, actualEnd, PaymentMethod.CASH, receipt.getTotalAmount());
+        equal(actualEnd, payment.getTime());
+        equal(30000, early.cafe.collectedAmount());
+        fails(SessionStateException.class, () -> early.cafe.endSession(session, PLANNED_END));
+        equal(actualEnd, session.getTimeEnd());
+        Session next = early.cafe.openSession("S02", early.account, early.computer, actualEnd);
+        equal(null, next.getPlannedEndTime());
+        equal(SessionStatus.ACTIVE, next.getSessionStatus());
+
+        Fixture onTime = new Fixture(new NormalCustomer("C02", "On time"));
+        Session onTimeSession = onTime.open();
+        onTime.cafe.endSession(onTimeSession, PLANNED_END);
+        Receipt onTimeReceipt = onTime.cafe.issueReceipt("R01", onTimeSession, onTime.employee);
+        equal(40000, onTimeReceipt.getTotalAmount());
+        onTime.cafe.pay("P01", onTimeReceipt, PLANNED_END.plusMinutes(1), PaymentMethod.CASH, onTimeReceipt.getTotalAmount());
+        equal(40000, onTime.cafe.collectedAmount());
+
+        Fixture late = new Fixture(new NormalCustomer("C03", "Overtime"));
+        Session lateSession = late.open();
+        LocalDateTime lateEnd = PLANNED_END.plusMinutes(30);
+        late.cafe.endSession(lateSession, lateEnd);
+        Receipt lateReceipt = late.cafe.issueReceipt("R01", lateSession, late.employee);
+        equal(50000, lateReceipt.getTotalAmount());
+        equal(PLANNED_END, lateSession.getPlannedEndTime());
+        fails(InvalidTimeException.class, () -> late.cafe.openSession("S02", late.account, late.computer, PLANNED_END.plusMinutes(15)));
+        equal(1, late.cafe.getSessions().size());
+        equal(ComputerStatus.AVAILABLE, late.computer.getComputerStatus());
+        late.cafe.pay("P01", lateReceipt, lateEnd, PaymentMethod.CASH, lateReceipt.getTotalAmount());
+        equal(50000, late.cafe.collectedAmount());
+
+        Fixture ordered = new Fixture(new NormalCustomer("C04", "Food order"));
+        Session orderedSession = ordered.open();
+        Food food = new Food("F01", "Combo", BigDecimal.valueOf(10000));
+        ordered.cafe.addFood(food);
+        LocalDateTime orderTime = START.plusMinutes(100);
+        ordered.cafe.order("SV01", orderedSession, ordered.employee, orderTime, new Food[]{food}, new int[]{1});
+        fails(InvalidTimeException.class, () -> ordered.cafe.endSession(orderedSession, actualEnd));
+        equal(null, orderedSession.getTimeEnd());
+        equal(PLANNED_END, orderedSession.getPlannedEndTime());
+        equal(SessionStatus.ACTIVE, orderedSession.getSessionStatus());
+        equal(ComputerStatus.IN_USE, ordered.computer.getComputerStatus());
+        ordered.cafe.endSession(orderedSession, orderTime);
+        equal(43333, ordered.cafe.issueReceipt("R01", orderedSession, ordered.employee).getTotalAmount());
+
+        Customer[] tiers = {new MemberCustomer("C05", "Member"), new VipCustomer("C06", "VIP")};
+        long[] expected = {27000, 25500};
+        for (int i = 0; i < tiers.length; i++) {
+            Fixture discounted = new Fixture(tiers[i]);
+            Session discountedSession = discounted.open();
+            discounted.cafe.endSession(discountedSession, actualEnd);
+            Receipt discountedReceipt = discounted.cafe.issueReceipt("R01", discountedSession, discounted.employee);
+            equal(30000, discountedReceipt.getGrossComputerAmount());
+            equal(expected[i], discountedReceipt.getTotalAmount());
+            discounted.cafe.pay("P01", discountedReceipt, actualEnd, PaymentMethod.CASH, discountedReceipt.getTotalAmount());
+            equal(expected[i], discounted.cafe.collectedAmount());
+        }
+        System.out.println("PlannedEndChecks OK: " + checks + " checks");
+    }
+}

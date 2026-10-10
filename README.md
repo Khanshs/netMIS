@@ -17,6 +17,7 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 6. Chạy `src/test/java/netcafe/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
+9. Chạy `EarlyEndDemo.main()` để xem đặt 3h–5h, nghỉ và thanh toán lúc 4h30; chạy `PlannedEndChecks.main()` để kiểm tra giờ dự kiến và thực tế.
 
 ## Cấu trúc
 
@@ -33,6 +34,7 @@ NetCafeMIS/
     │   ├── Main.java
     │   ├── ExceptionDemo.java
     │   ├── DiscountDemo.java
+    │   ├── EarlyEndDemo.java
     │   ├── Identifiable.java
     │   ├── Chargeable.java
     │   ├── IDiscount.java
@@ -41,7 +43,7 @@ NetCafeMIS/
     │   ├── enums/      # 5 enum, gồm AccountStatus
     │   ├── Service/    # Các lớp điều phối nghiệp vụ
     │   └── exception/  # 14 loại lỗi nghiệp vụ và EXCEPTIONS.md
-    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks
+    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, PlannedEndChecks
 ```
 
 Package `netcafe.Service` gom các service theo chức năng:
@@ -65,9 +67,11 @@ java -jar target/netcafe-mis-1.0.0.jar
 java -cp target/classes:target/test-classes netcafe.NetCafeChecks
 java -cp target/classes:target/test-classes netcafe.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.AccountChecks
+java -cp target/classes:target/test-classes netcafe.PlannedEndChecks
+java -cp target/classes netcafe.EarlyEndDemo
 ```
 
-Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy ba chương trình kiểm tra độc lập này.
+Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy bốn chương trình kiểm tra độc lập này.
 
 ## Chạy trực tiếp bằng PowerShell
 
@@ -78,6 +82,8 @@ Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở l
 .\run.ps1 -DiscountDemo
 .\run.ps1 -DiscountChecks
 .\run.ps1 -AccountChecks
+.\run.ps1 -EarlyEndDemo
+.\run.ps1 -PlannedEndChecks
 ```
 
 Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Không cần thư viện ngoài.
@@ -119,7 +125,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã chạy Maven 3.9.9 `clean package` với JDK 21 và `-Dmaven.compiler.release=8`: build thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa và 54 kiểm tra tài khoản, tất cả đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo` và `ExceptionDemo` chạy thành công.
+Đã chạy Maven 3.9.9 `package` với JDK 21 và `-Dmaven.compiler.release=8`: build thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa 54 kiểm tra tài khoản và 52 kiểm tra giờ dự kiến/thực tế, tổng cộng 191 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
 
 ## Tài khoản khách hàng
 
@@ -141,3 +147,31 @@ Customer owner = session.getAccount().getCustomer();
 `openSession` nhận tài khoản đã đăng ký, chỉ cho phép `ACTIVE`, kiểm tra phiên đang hoạt động và lịch sử thời gian theo tài khoản/máy. Mỗi tài khoản có tối đa một phiên ACTIVE; chưa giới hạn số tài khoản của cùng khách. `ReceiptService` lấy ưu đãi qua `session.getAccount().getCustomer()` và vẫn chốt giá trị vào hóa đơn.
 
 Phạm vi hiện tại là lưu thông tin tài khoản và kiểm tra khi mở phiên. Chưa có đăng nhập/xác thực, nạp tiền, tự trừ số dư hay yêu cầu số dư dương khi mở phiên. Chuỗi hash trong demo chỉ là placeholder được ghi rõ, không dùng để đăng nhập.
+
+
+## Giờ kết thúc dự kiến và nghỉ sớm
+
+Dùng overload năm tham số để đăng ký giờ dự kiến:
+
+```java
+LocalDateTime start = LocalDateTime.of(2026, 10, 5, 3, 0);
+Session session = cafe.openSession("S01", account, computer, start, start.plusHours(2));
+// Phiên ACTIVE; plannedEndTime = 5h, timeEnd = null.
+LocalDateTime actualEnd = start.plusMinutes(90);
+cafe.endSession(session, actualEnd); // COMPLETED; timeEnd = 4h30, máy AVAILABLE.
+Receipt receipt = cafe.issueReceipt("R01", session, employee);
+cafe.pay("P01", receipt, actualEnd, PaymentMethod.CASH, receipt.getTotalAmount());
+```
+
+plannedEndTime là tùy chọn, cố định khi mở phiên và phải sau giờ bắt đầu nếu có giá trị. Overload bốn tham số vẫn hoạt động với plannedEndTime = null. Giờ dự kiến không tự kết thúc phiên; khách có thể nghỉ sớm, đúng giờ hoặc chơi quá giờ. Tiền máy và lịch sử dùng giờ kết thúc thực tế. Không gọi endSession với giờ dự kiến khi khách còn chơi.
+
+Payment giữ điều kiện isBefore(timeEnd): từ chối thanh toán trước giờ nghỉ thực tế, chấp nhận đúng giờ nghỉ hoặc sau đó. Chỉ lập hóa đơn và thanh toán sau khi kết thúc phiên. Các ràng buộc thời gian gọi món vẫn áp dụng.
+
+Chạy EarlyEndDemo: bắt đầu 3h, dự kiến 5h, nghỉ và thanh toán lúc 4h30. Giá 20.000đ/giờ, khách Normal không gọi món:
+
+```text
+Start=03:00 PlannedEnd=05:00 ActualEnd=04:30
+Minutes=90
+Total=30000
+Collected=30000
+```

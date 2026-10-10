@@ -10,7 +10,7 @@
 6. issueReceipt: phiên COMPLETED, tối đa một hóa đơn. Tính tiền gốc, lấy hai tỷ lệ từ IDiscount của khách qua session.getAccount().getCustomer() và chốt tiền giảm cùng tiền phải trả vào hóa đơn.
 7. pay: tổng tiền phải bằng hóa đơn; thời gian không trước kết thúc; tối đa một giao dịch thành công cho hóa đơn.
 
-Khi khách đăng ký giờ chơi dự kiến, dùng openSession(id, account, computer, start, plannedEndTime). Giờ dự kiến phải sau start; có thể không truyền hoặc truyền null để giữ cách dùng cũ. Phiên vẫn ACTIVE với timeEnd = null. Khi khách nghỉ, gọi endSession với giờ nghỉ thực tế, lập hóa đơn rồi thanh toán. Ví dụ bắt đầu 3h, dự kiến 5h, nghỉ 4h30: tiền máy tính 90 phút, được thanh toán lúc 4h30. Không dùng endSession để ghi giờ dự kiến. plannedEndTime không tự đóng phiên, không giới hạn giờ nghỉ và không ngăn mở phiên mới sau giờ nghỉ thực tế; khách chơi quá giờ được tính theo thời lượng thực tế.
+Khách muốn nghỉ lúc nào thì gọi endSession(session, giờ nghỉ thực tế) lúc đó, rồi issueReceipt và pay. timeEnd ban đầu là null, chỉ được ghi khi kết thúc phiên. Ví dụ bắt đầu 3h, nghỉ 4h30: tiền máy tính 90 phút; được thanh toán lúc 4h30 hoặc sau đó. isBefore trong Payment ngăn thanh toán trước giờ nghỉ đã ghi. Không cần lưu giờ kết thúc dự kiến hoặc gọi endSession trước khi khách nghỉ.
 
 Các bước trên được tách vào package `netcafe.Service`: `CatalogService` đăng ký dữ liệu, `SessionService` quản lý phiên, `FoodOrderService` xử lý gọi món, `ReceiptService` lập hóa đơn và `PaymentService` ghi nhận thanh toán. `NetCafe` khởi tạo các service với cùng dữ liệu và cung cấp getter tương ứng. Không xóa các danh sách qua getter; không cung cấp nghiệp vụ xóa làm mất tham chiếu lịch sử. Các thao tác chạy tuần tự.
 

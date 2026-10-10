@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/** Planned 03:00-05:00, actually finished and paid at 04:30. */
+/** Started at 03:00; the customer ends the session and pays at 04:30. */
 public final class EarlyEndDemo {
     public static NetCafe sample() {
         NetCafe cafe = new NetCafe();
@@ -25,8 +25,7 @@ public final class EarlyEndDemo {
         cafe.addEmployee(employee);
 
         LocalDateTime start = LocalDateTime.of(2026, 10, 5, 3, 0);
-        LocalDateTime plannedEnd = start.plusHours(2);
-        Session session = cafe.openSession("S01", account, computer, start, plannedEnd);
+        Session session = cafe.openSession("S01", account, computer, start);
         LocalDateTime actualEnd = start.plusMinutes(90);
         cafe.endSession(session, actualEnd);
         Receipt receipt = cafe.issueReceipt("R01", session, employee);
@@ -39,7 +38,6 @@ public final class EarlyEndDemo {
         Session session = cafe.getSessions().get(0);
         Receipt receipt = cafe.getReceipts().get(0);
         System.out.println("Start=" + session.getTimeStart().toLocalTime()
-                + " PlannedEnd=" + session.getPlannedEndTime().toLocalTime()
                 + " ActualEnd=" + session.getTimeEnd().toLocalTime());
         System.out.println("Minutes=" + Duration.between(session.getTimeStart(), session.getTimeEnd()).toMinutes());
         System.out.println("Total=" + receipt.getTotalAmount());

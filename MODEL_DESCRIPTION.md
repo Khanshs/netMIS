@@ -12,29 +12,23 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 - `account`: tài khoản khách hàng đang sử dụng máy.
 - `computer`: máy tính được thuê trong phiên.
 - `timeStart`: thời điểm bắt đầu phiên.
-- `plannedEndTime`: giờ kết thúc dự kiến, có thể null khi không đăng ký trước; nếu có phải sau timeStart.
-- `timeEnd`: giờ kết thúc thực tế (null nếu phiên chưa hoàn tất); dùng để tính tiền và kiểm tra thanh toán.
+- `timeEnd`: thời điểm khách nghỉ thực tế (null nếu phiên chưa hoàn tất); dùng để tính tiền và kiểm tra thanh toán.
 - `sessionStatus`: trạng thái phiên, ví dụ `ACTIVE` hoặc `COMPLETED`.
 
 ### Constructor
 ```java
 public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start)
-public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start,
-               LocalDateTime plannedEndTime)
 ```
 
 - Kiểm tra `id` không rỗng bằng `Checks.id(id)`.
 - Kiểm tra `account`, `computer`, `start` không null bằng `Checks.required(...)`.
 - Mặc định trạng thái khởi tạo là `SessionStatus.ACTIVE`.
-- Constructor bốn tham số giữ nguyên cách dùng cũ, đặt plannedEndTime = null.
-- Constructor năm tham số kiểm tra giờ dự kiến, giữ timeEnd = null và không hoàn tất phiên.
 
 ### Phương thức chính
 - `getId()`, `getSessionId()`: trả về mã phiên.
 - `getAccount()`: lấy tài khoản; `getAccount().getCustomer()` lấy chủ tài khoản.
 - `getComputer()`: lấy máy tính.
 - `getTimeStart()`, `getTimeEnd()`: lấy thời điểm bắt đầu/kết thúc.
-- `getPlannedEndTime()`: lấy giờ kết thúc dự kiến.
 - `getSessionStatus()`: lấy trạng thái phiên.
 
 #### `complete(LocalDateTime end)`
@@ -58,8 +52,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Một phiên chỉ có thể được hoàn tất một lần.
 - Không thể tính tiền khi phiên đang hoạt động mà chưa có thời điểm kết thúc.
 - Tổng tiền phụ thuộc vào thời gian thực sự sử dụng và giá theo giờ của khu vực máy.
-- Có thể kết thúc sớm, đúng giờ hoặc muộn hơn plannedEndTime. Giờ dự kiến không tự đóng phiên hoặc thay thế lịch sử thực tế.
-- Ví dụ mở lúc 3h, dự kiến 5h: gọi endSession lúc 4h30 để lưu timeEnd = 4h30; tiền máy tính cho 90 phút. Payment lúc 4h30 hợp lệ, trước 4h30 bị từ chối.
+- Khi khách muốn nghỉ, gọi SessionService.endSession(session, giờ nghỉ thực tế), sau đó lập hóa đơn và thanh toán. Ví dụ bắt đầu 3h, nghỉ 4h30: tính tiền cho 90 phút, được thanh toán lúc 4h30. Không đăng ký giờ kết thúc trước.
 
 ---
 

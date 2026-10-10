@@ -16,11 +16,6 @@ public final class SessionService {
     }
 
     public Session openSession(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
-        return openSession(id, account, computer, start, null);
-    }
-
-    public Session openSession(String id, CustomerAccount account, Computer computer, LocalDateTime start,
-                               LocalDateTime plannedEndTime) {
         unique(data.sessions, id);
         registered(data.accounts, account);
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -40,7 +35,7 @@ public final class SessionService {
                 throw new InvalidTimeException("Session overlaps history or starts out of order");
             }
         }
-        Session session = new Session(id, account, computer, start, plannedEndTime);
+        Session session = new Session(id, account, computer, start);
         data.sessions.add(session);
         computer.setComputerStatus(ComputerStatus.IN_USE);
         return session;

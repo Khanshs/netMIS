@@ -16,7 +16,6 @@ Phần đặc tả gốc bên dưới được giữ làm tài liệu ban đầu
 - CustomerAccount: accountId, username, passwordHash, balance, status, customer. Chủ tài khoản đã đăng ký; mã và username không trùng; username không phân biệt hoa/thường; số dư không âm.
 - Customer vẫn giữ mã/tên, Normal/Member/VIP và IDiscount.
 - Session giữ account thay cho customer; lấy khách qua account.getCustomer().
-- Session có plannedEndTime tùy chọn cho giờ kết thúc dự kiến; timeEnd lưu giờ kết thúc thực tế. Khách có thể nghỉ sớm hoặc chơi quá giờ; tiền và thanh toán dùng timeEnd, không dùng plannedEndTime. Giờ dự kiến không tự đóng phiên.
 - NetCafeData có accounts; CatalogService có addAccount.
 - Mở phiên yêu cầu tài khoản đã đăng ký, ACTIVE, chưa có phiên ACTIVE và không chồng lấn lịch sử tài khoản/máy.
 - ReceiptService lấy ưu đãi qua session.getAccount().getCustomer().

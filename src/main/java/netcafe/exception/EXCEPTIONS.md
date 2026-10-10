@@ -12,7 +12,7 @@ Tất cả exception do project định nghĩa nằm trong `netcafe.exception`, 
 | `ActiveSessionExistsException` | Tài khoản đang có phiên ACTIVE nhưng mở thêm phiên trên máy khác | Kết thúc phiên hiện tại |
 | `InactiveAccountException` | Mở phiên bằng tài khoản INACTIVE | Dùng tài khoản ACTIVE hoặc cập nhật trạng thái hợp lệ |
 | `SessionStateException` | Kết thúc phiên đã hoàn tất, gọi món trên phiên đã kết thúc, lập hóa đơn/tiền chốt cho phiên ACTIVE | Kiểm tra trạng thái và thực hiện đúng trình tự |
-| `InvalidTimeException` | Thiếu thời gian phiên; giờ kết thúc dự kiến có giá trị nhưng không sau bắt đầu; kết thúc thực tế không sau bắt đầu; phiên chồng lấn lịch sử; gọi món trước phiên; kết thúc trước lần gọi món; thanh toán trước kết thúc thực tế | Sửa thời gian; các phiên mới được nhập theo lịch sử thực tế không lùi |
+| `InvalidTimeException` | Thiếu thời gian phiên; kết thúc không sau bắt đầu; phiên chồng lấn lịch sử; gọi món trước phiên; kết thúc trước lần gọi món; thanh toán trước kết thúc | Sửa thời gian; các phiên mới được nhập theo lịch sử không lùi |
 | `InactiveEmployeeException` | Nhân viên INACTIVE xử lý gọi món hoặc lập hóa đơn | Chọn nhân viên ACTIVE |
 | `InvalidOrderException` | Danh sách món rỗng, số dòng không khớp, số lượng không dương/tràn int, một món có hai giá trong cùng lần gọi, sửa đơn đã ghi nhận | Sửa dữ liệu món hoặc tạo lần gọi món mới |
 | `ReceiptAlreadyExistsException` | Lập hóa đơn thứ hai cho cùng phiên | Dùng hóa đơn đã có |

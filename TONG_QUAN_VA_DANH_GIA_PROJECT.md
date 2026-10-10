@@ -117,7 +117,7 @@ NetCafeMIS/
     └── test/java/netcafe/
         ├── NetCafeChecks.java
         ├── AccountChecks.java
-        ├── PlannedEndChecks.java
+        ├── EarlyEndChecks.java
         └── DiscountChecks.java
 ```
 
@@ -231,17 +231,16 @@ Giữ mã, tên và trạng thái nhân viên. Khi gọi món hoặc lập hóa 
 
 ### 5.5. Session
 
-Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm mã, tài khoản, máy, thời gian bắt đầu, giờ kết thúc dự kiến tùy chọn plannedEndTime, giờ kết thúc thực tế timeEnd và trạng thái phiên. Khách được lấy qua getAccount().getCustomer().
+Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm mã, tài khoản, máy, thời gian bắt đầu, thời gian kết thúc và trạng thái phiên. Khách được lấy qua getAccount().getCustomer().
 
 | Phương thức | Ý nghĩa |
 |---|---|
-| Constructor | Tạo phiên ACTIVE, timeEnd = null; plannedEndTime nếu có phải sau start |
-| `getPlannedEndTime()` | Lấy giờ kết thúc dự kiến; không dùng để chốt tiền hoặc kiểm tra thanh toán |
+| Constructor | Tạo phiên ACTIVE, thời gian kết thúc chưa có |
 | `complete(end)` | Kiểm tra phiên đang hoạt động và end sau start, rồi hoàn tất phiên |
 | `amountAt(at)` | Tạm tính tiền máy gốc đến thời điểm at; không chấp nhận at trước start |
 | `calculateAmount()` | Tính tiền máy gốc đến thời điểm kết thúc; yêu cầu phiên đã hoàn tất |
 
-Session tính tiền máy theo thời gian thực tế và giá khu. plannedEndTime không tự đóng phiên và không cấm nghỉ sớm hoặc chơi quá giờ. Việc đổi trạng thái máy, kiểm tra các lần gọi món và kiểm tra lịch sử nằm ở SessionService. Chỉ gọi `Session.complete()` trực tiếp sẽ không thực hiện đủ những kiểm tra đó.
+Session tính tiền máy theo thời gian và giá khu. Việc đổi trạng thái máy, kiểm tra các lần gọi món và kiểm tra lịch sử nằm ở SessionService. Chỉ gọi `Session.complete()` trực tiếp sẽ không thực hiện đủ những kiểm tra đó.
 
 ### 5.6. Food
 
@@ -702,7 +701,7 @@ Minh họa mã khách trùng, lập hóa đơn cho phiên ACTIVE và thanh toán
 
 ### 14.3.1. EarlyEndDemo
 
-Minh họa khách đăng ký 3h–5h rồi nghỉ lúc 4h30. Phiên giữ plannedEndTime = 5h, timeEnd thực tế = 4h30; tiền máy 90 phút ở giá 20.000đ/giờ là 30.000đ. Thanh toán lúc 4h30 thành công. Giờ dự kiến không tự đóng phiên và không thay thế giờ thực tế.
+Minh họa khách bắt đầu 3h rồi yêu cầu kết thúc và thanh toán lúc 4h30. endSession lưu timeEnd = 4h30, chuyển phiên COMPLETED và máy AVAILABLE. Tiền máy 90 phút ở giá 20.000đ/giờ là 30.000đ. Thanh toán lúc 4h30 thành công; không cần đặt trước giờ nghỉ.
 
 ### 14.4. Các chương trình kiểm tra độc lập
 
@@ -713,8 +712,8 @@ Bốn class kiểm tra độc lập bằng main, không dùng JUnit.
 | NetCafeChecks | Dữ liệu mẫu, trạng thái, mã, thời gian, gọi món, hóa đơn, thanh toán | 43 |
 | DiscountChecks | Ba lớp con, tỷ lệ, làm tròn, hóa đơn chốt, thanh toán sau giảm và tỷ lệ sai | 42 |
 | AccountChecks | Dữ liệu tài khoản, đăng ký, username, trạng thái và lịch sử phiên theo tài khoản | 54 |
-| PlannedEndChecks | Giờ dự kiến, nghỉ sớm/đúng giờ/quá giờ, tiền thực tế và điều kiện thanh toán | 52 |
-| **Tổng** | | **191** |
+| EarlyEndChecks | Khách kết thúc phiên theo giờ thực tế, tính tiền và kiểm tra thời điểm thanh toán | 40 |
+| **Tổng** | | **179** |
 
 DiscountChecks có TestCustomer nội bộ để giả lập tỷ lệ không hợp lệ hoặc thay đổi, phục vụ kiểm tra; nó không phải một hạng khách thứ tư dùng trong ứng dụng.
 
@@ -728,7 +727,7 @@ Số kiểm tra là số lần gọi hàm kiểm tra của bốn chương trình
 2. Chọn JDK phù hợp; mã nguồn hướng tới Java 8.
 3. Đảm bảo encoding UTF-8.
 4. Chạy Main, DiscountDemo, ExceptionDemo hoặc EarlyEndDemo theo mục đích.
-5. Chạy main của NetCafeChecks, DiscountChecks, AccountChecks và PlannedEndChecks để kiểm tra.
+5. Chạy main của NetCafeChecks, DiscountChecks, AccountChecks và EarlyEndChecks để kiểm tra.
 
 ### 15.2. PowerShell
 
@@ -741,7 +740,7 @@ Set-Location 'D:\OOP\NetCafeMIS'
 .\run.ps1 -DiscountChecks
 .\run.ps1 -AccountChecks
 .\run.ps1 -EarlyEndDemo
-.\run.ps1 -PlannedEndChecks
+.\run.ps1 -EarlyEndChecks
 ```
 
 run.ps1 tìm JDK từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ, biên dịch nguồn và chạy class được chọn. Có thể truyền `-JavaHome 'C:\duong-dan-jdk'`.
@@ -757,7 +756,7 @@ pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng 
 
 ### 15.4. Bằng chứng của lần rà soát này
 
-Đã chạy Maven 3.9.9 package trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, PlannedEndChecks báo 52 kiểm tra qua.
+Đã chạy Maven 3.9.9 clean package trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, EarlyEndChecks báo 40 kiểm tra qua.
 
 Ví dụ Java hoàn chỉnh ở mục 13 cũng đã được trích từ tài liệu, biên dịch và chạy riêng; cả tổng hóa đơn và thực thu đều là 135600 như phần giải thích.
 

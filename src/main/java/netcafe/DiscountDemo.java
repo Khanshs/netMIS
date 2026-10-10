@@ -32,7 +32,7 @@ public final class DiscountDemo {
                     "demo-hash-not-for-login", BigDecimal.ZERO, AccountStatus.ACTIVE, customer);
             cafe.addAccount(account);
             LocalDateTime start = LocalDateTime.of(2026, 10, 5, 8 + i, 0);
-            Session session = cafe.openSession("S0" + suffix, account, computer, start, start.plusHours(1));
+            Session session = cafe.openSession("S0" + suffix, account, computer, start);
             cafe.getFoodOrderService().order("SV0" + suffix, session, employee,
                     start.plusMinutes(10), new Food[]{food}, new int[]{1});
             cafe.endSession(session, start.plusHours(1));

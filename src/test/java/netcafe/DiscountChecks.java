@@ -70,15 +70,16 @@ public final class DiscountChecks {
         equal(131000, vip.getTotalAmount());
         equal(418500, cafe.collectedAmount());
 
-        equal(true, normal.getSession().getCustomer() instanceof NormalCustomer);
-        equal(true, member.getSession().getCustomer() instanceof MemberCustomer);
-        equal(true, vip.getSession().getCustomer() instanceof VipCustomer);
-        Customer customer = vip.getSession().getCustomer();
+        equal(true, normal.getSession().getAccount().getCustomer() instanceof NormalCustomer);
+        equal(true, member.getSession().getAccount().getCustomer() instanceof MemberCustomer);
+        equal(true, vip.getSession().getAccount().getCustomer() instanceof VipCustomer);
+        CustomerAccount account = vip.getSession().getAccount();
+        Customer customer = account.getCustomer();
         equal("VIP", customer.getTierName());
         equal("MEMBER", member.getCustomerTier());
         equal(137500, member.getTotalAmount());
         LocalDateTime start = LocalDateTime.of(2026, 10, 5, 11, 0);
-        Session vipSession = cafe.openSession("S04", customer, cafe.getComputers().get(0), start);
+        Session vipSession = cafe.openSession("S04", account, cafe.getComputers().get(0), start);
         cafe.endSession(vipSession, start.plusHours(1));
         Receipt vipReceipt = cafe.issueReceipt("R04", vipSession, cafe.getEmployees().get(0));
         equal("VIP", vipReceipt.getCustomerTier());
@@ -100,7 +101,9 @@ public final class DiscountChecks {
         NetCafe invalid = Main.sample();
         TestCustomer testCustomer = new TestCustomer("C99", new BigDecimal("0.10"), new BigDecimal("0.05"));
         invalid.addCustomer(testCustomer);
-        Session session = invalid.openSession("S99", testCustomer, invalid.getComputers().get(5), start.plusHours(3));
+        CustomerAccount testAccount = new CustomerAccount("A99", "testcustomer", "test-hash", money(0), AccountStatus.ACTIVE, testCustomer);
+        invalid.addAccount(testAccount);
+        Session session = invalid.openSession("S99", testAccount, invalid.getComputers().get(5), start.plusHours(3));
         invalid.endSession(session, start.plusHours(4));
         Employee employee = invalid.getEmployees().get(0);
         Receipt frozen = new Receipt("FROZEN", session, employee, money(50000), money(100000));

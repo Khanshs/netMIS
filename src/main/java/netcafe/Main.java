@@ -41,6 +41,13 @@ public final class Main {
     catalog.addCustomer(c3);
     catalog.addCustomer(new NormalCustomer("C04","Lionel Messi"));
 
+    // Demo-only placeholders; no login/authentication is implemented by this sample.
+    CustomerAccount a1 = new CustomerAccount("A01", "yamal", "demo-hash-not-for-login", v(0), AccountStatus.ACTIVE, c1);
+    CustomerAccount a2 = new CustomerAccount("A02", "bruno", "demo-hash-not-for-login", v(0), AccountStatus.ACTIVE, c2);
+    CustomerAccount a3 = new CustomerAccount("A03", "ronaldo", "demo-hash-not-for-login", v(0), AccountStatus.ACTIVE, c3);
+    CustomerAccount a4 = new CustomerAccount("A04", "messi", "demo-hash-not-for-login", v(0), AccountStatus.ACTIVE, cafe.getCustomers().get(3));
+    catalog.addAccount(a1); catalog.addAccount(a2); catalog.addAccount(a3); catalog.addAccount(a4);
+
     Employee
             e1=new Employee("E01","Erik TenHag",EmployeeStatus.ACTIVE),
             e2=new Employee("E02","Anchelotti",EmployeeStatus.ACTIVE);
@@ -55,27 +62,27 @@ public final class Main {
     catalog.addFood(f2);
     catalog.addFood(new Food("F03","Snack",v(7000)));
 
-    Session s1=sessions.openSession("S01",c1,pc1,t(8,0));
+    Session s1=sessions.openSession("S01",a1,pc1,t(8,0));
     orders.order(
             "SV01",s1,e1,t(8,20),
             new Food[]{f1,f2},
             new int[]{1,1},
             new BigDecimal[]{v(15000),v(10000)});
 
-    Session s2=sessions.openSession("S02",c2,pc3,t(9,0));
+    Session s2=sessions.openSession("S02",a2,pc3,t(9,0));
     orders.order(
             "SV02",s2,e2,t(9,30),
             new Food[]{f1},
             new int[]{2},
             new BigDecimal[]{v(15000)});
 
-    Session s3=sessions.openSession("S03",c3,pc4,t(10,0));
+    Session s3=sessions.openSession("S03",a3,pc4,t(10,0));
 
     sessions.endSession(s1,t(10,0));
     sessions.endSession(s2,t(10,30));
     sessions.endSession(s3,t(11,0));
 
-    Session s4=sessions.openSession("S04",c1,pc2,t(11,0));
+    Session s4=sessions.openSession("S04",a1,pc2,t(11,0));
     orders.order(
             "SV03",s4,e1,t(11,15),
             new Food[]{f2},

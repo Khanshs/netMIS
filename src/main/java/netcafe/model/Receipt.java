@@ -21,7 +21,7 @@ public final class Receipt implements Identifiable, Chargeable {
     public Receipt(String id, Session session, Employee employee,
                    BigDecimal serviceAmount, BigDecimal computerAmount) {
         this(id, session, employee, serviceAmount, computerAmount,
-             Checks.required(session, "session").getCustomer());
+             Checks.required(session, "session").getAccount().getCustomer());
     }
 
     public Receipt(String id, Session session, Employee employee,

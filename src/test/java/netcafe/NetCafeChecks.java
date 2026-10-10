@@ -50,11 +50,12 @@ public final class NetCafeChecks {
         fails(ValidationException.class, () -> new Food("F99", "Bad", money(-1)));
         fails(ValidationException.class, () -> cafe.addCustomer(null));
         fails(DuplicateIdException.class, () -> cafe.addCustomer(new NormalCustomer(" C01 ", "Other")));
-        fails(EntityNotFoundException.class, () -> cafe.openSession("S05", new NormalCustomer("C99", "Unknown"), cafe.getComputers().get(5), time(12, 0)));
-        fails(ComputerUnavailableException.class, () -> cafe.openSession("S05", cafe.getCustomers().get(3), cafe.getComputers().get(4), time(12, 0)));
-        fails(ComputerUnavailableException.class, () -> cafe.openSession("S05", cafe.getCustomers().get(3), active.getComputer(), time(12, 0)));
-        fails(ActiveSessionExistsException.class, () -> cafe.openSession("S05", active.getCustomer(), cafe.getComputers().get(5), time(12, 0)));
-        fails(InvalidTimeException.class, () -> cafe.openSession("S05", cafe.getCustomers().get(3), cafe.getComputers().get(0), time(9, 0)));
+        CustomerAccount unknown = new CustomerAccount("A99", "unknown", "test-hash", money(0), AccountStatus.ACTIVE, cafe.getCustomers().get(3));
+        fails(EntityNotFoundException.class, () -> cafe.openSession("S05", unknown, cafe.getComputers().get(5), time(12, 0)));
+        fails(ComputerUnavailableException.class, () -> cafe.openSession("S05", cafe.getAccounts().get(3), cafe.getComputers().get(4), time(12, 0)));
+        fails(ComputerUnavailableException.class, () -> cafe.openSession("S05", cafe.getAccounts().get(3), active.getComputer(), time(12, 0)));
+        fails(ActiveSessionExistsException.class, () -> cafe.openSession("S05", active.getAccount(), cafe.getComputers().get(5), time(12, 0)));
+        fails(InvalidTimeException.class, () -> cafe.openSession("S05", cafe.getAccounts().get(3), cafe.getComputers().get(0), time(9, 0)));
         fails(InvalidTimeException.class, () -> cafe.endSession(active, time(11, 10)));
         equal(SessionStatus.ACTIVE, active.getSessionStatus());
         equal(ComputerStatus.IN_USE, active.getComputer().getComputerStatus());
@@ -86,7 +87,7 @@ public final class NetCafeChecks {
         equal(71000, finalReceipt.getTotalAmount());
         cafe.getPaymentService().pay("P02", finalReceipt, time(12, 0), PaymentMethod.BANK_TRANSFER, finalReceipt.getTotalAmount());
         equal(120000, cafe.collectedAmount());
-        Session rounding = new Session("S99", cafe.getCustomers().get(3), cafe.getComputers().get(0), time(13, 0));
+        Session rounding = new Session("S99", cafe.getAccounts().get(3), cafe.getComputers().get(0), time(13, 0));
         rounding.complete(time(13, 0).plusSeconds(1));
         equal(3, rounding.calculateAmount());
         System.out.println("NetCafeChecks OK: " + checks + " checks");

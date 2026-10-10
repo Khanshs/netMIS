@@ -12,16 +12,16 @@ import java.time.LocalDateTime;
 public final class Session implements Identifiable, Chargeable {
   // Attribute
   private final String sessionId;
-  private final Customer customer;
+  private final CustomerAccount account;
   private final Computer computer;
   private final LocalDateTime timeStart;
   private LocalDateTime timeEnd;
   private SessionStatus sessionStatus;
 
   //Constructor
-  public Session(String id, Customer customer, Computer computer, LocalDateTime start) {
+  public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
     sessionId=Checks.id(id);
-    this.customer=Checks.required(customer, "customer");
+    this.account=Checks.required(account, "account");
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");
     sessionStatus=SessionStatus.ACTIVE;
@@ -29,7 +29,7 @@ public final class Session implements Identifiable, Chargeable {
 
   public String getId() { return sessionId; }
   public String getSessionId() { return sessionId; }
-  public Customer getCustomer() { return customer; }
+  public CustomerAccount getAccount() { return account; }
   public Computer getComputer() { return computer; }
   public LocalDateTime getTimeStart() { return timeStart; }
   public LocalDateTime getTimeEnd() { return timeEnd; }

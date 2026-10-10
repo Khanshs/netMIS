@@ -5,11 +5,11 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 ## 1. Session
 
 ### Mục đích
-`Session` đại diện cho một phiên sử dụng máy tính của khách hàng trong quán net. Mỗi phiên gắn với một `Customer`, một `Computer` và thời điểm bắt đầu sử dụng. Model này quản lý trạng thái phiên, thời gian kết thúc và tính toán số tiền phải trả theo thời gian sử dụng.
+`Session` đại diện cho một phiên sử dụng máy tính của khách hàng trong quán net. Mỗi phiên gắn với một `CustomerAccount`, một `Computer` và thời điểm bắt đầu sử dụng. Khách hàng được lấy qua `session.getAccount().getCustomer()`. Model này quản lý trạng thái phiên, thời gian kết thúc và tính toán số tiền phải trả theo thời gian sử dụng.
 
 ### Thuộc tính
 - `sessionId`: mã định danh duy nhất của phiên.
-- `customer`: khách hàng đang sử dụng máy.
+- `account`: tài khoản khách hàng đang sử dụng máy.
 - `computer`: máy tính được thuê trong phiên.
 - `timeStart`: thời điểm bắt đầu phiên.
 - `timeEnd`: thời điểm kết thúc phiên (null nếu phiên chưa hoàn tất).
@@ -17,16 +17,16 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 
 ### Constructor
 ```java
-public Session(String id, Customer customer, Computer computer, LocalDateTime start)
+public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start)
 ```
 
 - Kiểm tra `id` không rỗng bằng `Checks.id(id)`.
-- Kiểm tra `customer`, `computer`, `start` không null bằng `Checks.required(...)`.
+- Kiểm tra `account`, `computer`, `start` không null bằng `Checks.required(...)`.
 - Mặc định trạng thái khởi tạo là `SessionStatus.ACTIVE`.
 
 ### Phương thức chính
 - `getId()`, `getSessionId()`: trả về mã phiên.
-- `getCustomer()`: lấy khách hàng.
+- `getAccount()`: lấy tài khoản; `getAccount().getCustomer()` lấy chủ tài khoản.
 - `getComputer()`: lấy máy tính.
 - `getTimeStart()`, `getTimeEnd()`: lấy thời điểm bắt đầu/kết thúc.
 - `getSessionStatus()`: lấy trạng thái phiên.

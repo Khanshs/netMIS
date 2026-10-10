@@ -20,6 +20,18 @@ public final class CatalogService {
     public void addEmployee(Employee value) { add(data.employees, value); }
     public void addFood(Food value) { add(data.foods, value); }
 
+    public void addAccount(CustomerAccount value) {
+        required(value, "account");
+        unique(data.accounts, value.getId());
+        registered(data.customers, value.getCustomer());
+        for (CustomerAccount old : data.accounts) {
+            if (old.getUsername().equalsIgnoreCase(value.getUsername())) {
+                throw new DuplicateUsernameException("Duplicate username: " + value.getUsername());
+            }
+        }
+        data.accounts.add(value);
+    }
+
     public void addComputer(Computer value) {
         required(value, "computer");
         registered(data.sections, value.getSection());

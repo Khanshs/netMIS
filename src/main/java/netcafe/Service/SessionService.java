@@ -15,24 +15,27 @@ public final class SessionService {
         this.data = data;
     }
 
-    public Session openSession(String id, Customer customer, Computer computer, LocalDateTime start) {
+    public Session openSession(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
         unique(data.sessions, id);
-        registered(data.customers, customer);
+        registered(data.accounts, account);
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new InactiveAccountException("Inactive account: " + account.getId());
+        }
         registered(data.computers, computer);
         if (start == null) throw new InvalidTimeException("Session start is required");
         if (computer.getComputerStatus() != ComputerStatus.AVAILABLE) {
             throw new ComputerUnavailableException("Computer unavailable: " + computer.getId());
         }
         for (Session old : data.sessions) {
-            if (old.getSessionStatus() == SessionStatus.ACTIVE && old.getCustomer() == customer) {
-                throw new ActiveSessionExistsException("Customer already active: " + customer.getId());
+            if (old.getSessionStatus() == SessionStatus.ACTIVE && old.getAccount() == account) {
+                throw new ActiveSessionExistsException("Account already active: " + account.getId());
             }
-            if ((old.getComputer() == computer || old.getCustomer() == customer)
+            if ((old.getComputer() == computer || old.getAccount() == account)
                     && (old.getTimeEnd() == null || old.getTimeEnd().isAfter(start))) {
                 throw new InvalidTimeException("Session overlaps history or starts out of order");
             }
         }
-        Session session = new Session(id, customer, computer, start);
+        Session session = new Session(id, account, computer, start);
         data.sessions.add(session);
         computer.setComputerStatus(ComputerStatus.IN_USE);
         return session;

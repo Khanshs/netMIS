@@ -32,7 +32,7 @@ public final class ReceiptService {
         for (FoodService service : data.services) {
             if (service.getSession() == session) serviceAmount = serviceAmount.add(service.getTotal());
         }
-        IDiscount policy = session.getCustomer();
+        IDiscount policy = session.getAccount().getCustomer();
         Receipt receipt = new Receipt(id, session, employee, serviceAmount, session.calculateAmount(), policy);
         data.receipts.add(receipt);
         return receipt;

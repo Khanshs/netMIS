@@ -10,6 +10,7 @@ final class NetCafeData {
     final List<ComputerSection> sections = new ArrayList<>();
     final List<Computer> computers = new ArrayList<>();
     final List<Customer> customers = new ArrayList<>();
+    final List<CustomerAccount> accounts = new ArrayList<>();
     final List<Employee> employees = new ArrayList<>();
     final List<Food> foods = new ArrayList<>();
     final List<Session> sessions = new ArrayList<>();

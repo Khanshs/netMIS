@@ -2,7 +2,7 @@
 
 **Project:** `D:\OOP\NetCafeMIS`  
 **Nền tảng:** Java 8, Maven, ứng dụng console trên IntelliJ IDEA  
-**Thời điểm đối chiếu mã:** 07/10/2026  
+**Thời điểm đối chiếu mã:** 10/10/2026
 **Mục đích tài liệu:** giúp đọc code, hiểu nghiệp vụ, chuẩn bị trình bày bài OOP và nhận diện những điểm nên cải thiện.
 
 Tài liệu phản ánh mã hiện tại. Các đề xuất cải thiện ở cuối tài liệu là nhận xét thiết kế, chưa phải các chức năng đã được triển khai.
@@ -15,7 +15,7 @@ Luồng chính:
 
 ```text
 Chuẩn bị danh mục
-→ chọn khách và máy trống
+→ chọn tài khoản ACTIVE đã đăng ký và máy trống
 → mở phiên
 → gọi món một hoặc nhiều lần
 → kết thúc phiên
@@ -39,7 +39,7 @@ Project sử dụng danh sách đối tượng Java trong bộ nhớ. Chạy l�
 
 | Nội dung | Hiện trạng |
 |---|---|
-| Danh mục khu, máy, khách, nhân viên, món | Có đăng ký đối tượng vào danh sách |
+| Danh mục khu, máy, khách, tài khoản, nhân viên, món | Có đăng ký đối tượng vào danh sách |
 | Mở/kết thúc phiên | Có kiểm tra trạng thái và thời gian qua service |
 | Gọi món | Có nhiều lần gọi, nhiều dòng món và giá lịch sử |
 | Khách Normal/Member/VIP | Có ba lớp con của Customer |
@@ -47,11 +47,12 @@ Project sử dụng danh sách đối tượng Java trong bộ nhớ. Chạy l�
 | Thanh toán | Có một lần thu đủ tiền cho mỗi hóa đơn |
 | Doanh thu thực thu | Có tổng Payment.amount |
 | Exception và demo | Có |
-| Kiểm tra nghiệp vụ | Có hai chương trình kiểm tra độc lập |
+| Kiểm tra nghiệp vụ | Có ba chương trình kiểm tra độc lập |
 | 30 truy vấn trong phần 4 đặc tả | Chưa viết code; đặc tả gốc nêu phần này là yêu cầu truy vấn chưa code |
 | Tìm kiếm, sửa, xóa toàn bộ danh mục qua một menu | Chưa có |
 | Lưu dữ liệu lâu dài, database | Chưa có |
-| GUI, tài khoản, phân quyền, thao tác đồng thời | Chưa có |
+| Tài khoản khách hàng | Có thông tin tài khoản, số dư, trạng thái và kiểm tra khi mở phiên |
+| GUI, đăng nhập/xác thực, phân quyền, nạp/trừ tiền, thao tác đồng thời | Chưa có |
 | Nâng/hạ hạng khách đang tồn tại | Chưa có nghiệp vụ quản lý chuyển hạng |
 
 Ba loại khách và mức giảm là phần mở rộng theo yêu cầu học tập sau bản đặc tả ban đầu. Chúng được thể hiện bằng kế thừa và `IDiscount`.
@@ -81,6 +82,7 @@ NetCafeMIS/
     │   │   ├── ComputerSection.java
     │   │   ├── Computer.java
     │   │   ├── Customer.java
+    │   │   ├── CustomerAccount.java
     │   │   ├── Employee.java
     │   │   ├── Session.java
     │   │   ├── Food.java
@@ -106,12 +108,14 @@ NetCafeMIS/
     │   │   ├── ComputerStatus.java
     │   │   ├── SessionStatus.java
     │   │   ├── EmployeeStatus.java
+    │   │   ├── AccountStatus.java
     │   │   └── PaymentMethod.java
     │   └── exception/
     │       ├── EXCEPTIONS.md
-    │       └── 12 file exception nghiệp vụ
+    │       └── 14 file exception nghiệp vụ
     └── test/java/netcafe/
         ├── NetCafeChecks.java
+        ├── AccountChecks.java
         └── DiscountChecks.java
 ```
 
@@ -121,14 +125,14 @@ Các thư mục `.idea`, `target` hoặc `out` phục vụ IDE và biên dịch.
 
 | Nhóm | Số file |
 |---|---:|
-| 10 model theo ERD + 3 lớp con khách + Checks | 14 |
+| 10 model theo ERD + CustomerAccount + 3 lớp con khách + Checks | 15 |
 | Service và lớp hỗ trợ service | 8 |
-| Exception nghiệp vụ | 12 |
+| Exception nghiệp vụ | 14 |
 | Interface | 3 |
-| Enum | 4 |
+| Enum | 5 |
 | Main và hai demo | 3 |
-| Hai chương trình kiểm tra | 2 |
-| **Tổng** | **46** |
+| Ba chương trình kiểm tra | 3 |
+| **Tổng** | **51** |
 
 Số lượng này tính theo file Java, không tính các lớp nội bộ hoặc đối tượng ẩn danh trong chương trình kiểm tra. Nhiều file không tự chứng minh thiết kế tốt; cần xem mỗi file có trách nhiệm đủ rõ và phù hợp với quy mô bài hay không.
 
@@ -169,7 +173,8 @@ Hai service trên làm việc trong cùng một quán. Chúng không giữ hai b
 ```mermaid
 erDiagram
     ComputerSection ||--o{ Computer : contains
-    Customer ||--o{ Session : uses
+    Customer ||--o{ CustomerAccount : owns
+    CustomerAccount ||--o{ Session : uses
     Computer ||--o{ Session : records
     Session ||--o{ FoodService : orders
     Employee ||--o{ FoodService : handles
@@ -185,7 +190,8 @@ erDiagram
 | Quan hệ | Cách hiểu |
 |---|---|
 | Khu → máy | Một khu có nhiều máy; mỗi máy có một khu |
-| Khách → phiên | Một khách có nhiều phiên trong lịch sử |
+| Khách → tài khoản | Một khách có thể có nhiều tài khoản |
+| Tài khoản → phiên | Một tài khoản có nhiều phiên theo lịch sử, tối đa một phiên ACTIVE |
 | Máy → phiên | Một máy có nhiều phiên trong lịch sử, không được chồng lấn khi thao tác qua service |
 | Phiên → lần gọi món | Một phiên có thể không gọi món hoặc gọi nhiều lần |
 | Lần gọi → chi tiết | Một lần gọi đã ghi nhận có ít nhất một dòng món |
@@ -223,7 +229,7 @@ Giữ mã, tên và trạng thái nhân viên. Khi gọi món hoặc lập hóa 
 
 ### 5.5. Session
 
-Biểu diễn một lần khách sử dụng một máy. Dữ liệu gồm mã, khách, máy, thời gian bắt đầu, thời gian kết thúc và trạng thái phiên.
+Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm mã, tài khoản, máy, thời gian bắt đầu, thời gian kết thúc và trạng thái phiên. Khách được lấy qua getAccount().getCustomer().
 
 | Phương thức | Ý nghĩa |
 |---|---|
@@ -339,7 +345,7 @@ BigDecimal foodRate = discount.getFoodDiscountRate();         // 0.05
 Trong ReceiptService:
 
 ```java
-IDiscount policy = session.getCustomer();
+IDiscount policy = session.getAccount().getCustomer();
 Receipt receipt = new Receipt(
     id, session, employee, serviceAmount, session.calculateAmount(), policy
 );
@@ -396,17 +402,17 @@ Trong luồng hiện tại, IDiscount được dùng rõ qua biến interface v�
 
 ### 8.1. CatalogService
 
-Đăng ký khu, máy, khách, nhân viên và món vào danh sách. Các phương thức chính là addSection, addComputer, addCustomer, addEmployee, addFood.
+Đăng ký khu, máy, khách, tài khoản, nhân viên và món vào danh sách. Các phương thức chính là addSection, addComputer, addCustomer, addAccount, addEmployee, addFood. addAccount kiểm tra chủ đã đăng ký, mã không trùng và username không trùng kể cả khác chữ hoa/thường.
 
 Kiểm tra đối tượng không null và mã không trùng. Với máy, kiểm tra khu đã đăng ký và không cho thêm máy IN_USE chưa có phiên. CatalogService hiện tập trung vào thêm dữ liệu; tên lớp không có nghĩa đã có đầy đủ chức năng sửa, xóa hoặc tra cứu.
 
 ### 8.2. SessionService
 
-`openSession()` kiểm tra mã, tham chiếu, thời gian, máy AVAILABLE, khách chưa có phiên ACTIVE và lịch sử trên máy/khách. Sau khi kiểm tra, tạo Session, thêm vào danh sách và chuyển máy IN_USE.
+`openSession()` nhận CustomerAccount, kiểm tra mã, tham chiếu đã đăng ký, tài khoản ACTIVE, thời gian, máy AVAILABLE, tài khoản chưa có phiên ACTIVE và lịch sử trên máy/tài khoản. Sau khi kiểm tra, tạo Session, thêm vào danh sách và chuyển máy IN_USE.
 
 `endSession()` kiểm tra phiên ACTIVE, end sau start và không có lần gọi món nào sau end. Sau đó hoàn tất phiên và chuyển máy AVAILABLE.
 
-Các phiên mới của cùng máy hoặc khách được nhập theo lịch sử không lùi. Đây là một cách kiểm tra đơn giản, phù hợp dữ liệu nhỏ và thao tác tuần tự.
+Các phiên mới của cùng máy hoặc tài khoản được nhập theo lịch sử không lùi. Đây là một cách kiểm tra đơn giản, phù hợp dữ liệu nhỏ và thao tác tuần tự.
 
 ### 8.3. FoodOrderService
 
@@ -439,7 +445,7 @@ Getter danh sách trả `Collections.unmodifiableList(...)`. Bên gọi không t
 
 ### 8.7. NetCafeData
 
-Giữ các danh sách dùng chung: sections, computers, customers, employees, foods, sessions, services, receipts, payments. Các FoodOrderDetail nằm trong FoodService thay vì một danh sách toàn cục riêng.
+Giữ các danh sách dùng chung: sections, computers, customers, accounts, employees, foods, sessions, services, receipts, payments. Các FoodOrderDetail nằm trong FoodService thay vì một danh sách toàn cục riêng.
 
 Lớp và các danh sách chỉ được tiếp cận trong package Service. Nó không phải database và không lưu dữ liệu ra ổ đĩa.
 
@@ -477,7 +483,7 @@ MAINTENANCE ngăn mở phiên. Project chưa có quy trình bảo trì riêng đ
 
 ## 10. Exception nghiệp vụ
 
-12 class exception kế thừa trực tiếp RuntimeException. Bên gọi có thể bắt từng loại lỗi để thông báo hoặc yêu cầu sửa dữ liệu. Khi nhiều điều kiện cùng sai, lỗi được trả theo thứ tự kiểm tra trong phương thức.
+14 class exception kế thừa trực tiếp RuntimeException. Bên gọi có thể bắt từng loại lỗi để thông báo hoặc yêu cầu sửa dữ liệu. Khi nhiều điều kiện cùng sai, lỗi được trả theo thứ tự kiểm tra trong phương thức.
 
 | Exception | Trường hợp chính |
 |---|---|
@@ -616,6 +622,8 @@ public class LearningScenario {
                 "CS01", "Khu thường", new BigDecimal("12000"));
         Computer pc1 = new Computer("PC1", section, ComputerStatus.AVAILABLE);
         Customer customer = new MemberCustomer("C01", "An");
+        CustomerAccount account = new CustomerAccount("A01", "an", "demo-hash-not-for-login",
+                BigDecimal.ZERO, AccountStatus.ACTIVE, customer);
         Employee employee = new Employee("E01", "Bình", EmployeeStatus.ACTIVE);
         Food mi = new Food("F01", "Mì trộn", new BigDecimal("20000"));
         Food com = new Food("F02", "Cơm trộn", new BigDecimal("30000"));
@@ -624,13 +632,14 @@ public class LearningScenario {
         cafe.addSection(section);
         cafe.addComputer(pc1);
         cafe.addCustomer(customer);
+        cafe.addAccount(account);
         cafe.addEmployee(employee);
         cafe.addFood(mi);
         cafe.addFood(com);
         cafe.addFood(coca);
 
         LocalDateTime start = LocalDateTime.of(2026, 10, 5, 8, 0);
-        Session session = cafe.openSession("S01", customer, pc1, start);
+        Session session = cafe.openSession("S01", account, pc1, start);
         cafe.getFoodOrderService().order(
                 "SV01", session, employee, start.plusMinutes(20),
                 new Food[]{mi, com, coca}, new int[]{2, 2, 2});
@@ -652,7 +661,7 @@ Giải thích kết quả: máy gốc 24.000đ, Member được giảm 2.400đ n
 
 ### 14.1. Main
 
-Main.sample() tạo 2 khu, 6 máy, 4 khách Normal, 3 nhân viên, 3 món, 4 phiên, 3 lần gọi, 4 dòng món, 2 hóa đơn và 1 Payment theo đặc tả.
+Main.sample() tạo 2 khu, 6 máy, 4 khách Normal, 4 tài khoản ACTIVE, 3 nhân viên, 3 món, 4 phiên, 3 lần gọi, 4 dòng món, 2 hóa đơn và 1 Payment theo đặc tả.
 
 | Đối tượng | Kết quả |
 |---|---|
@@ -688,19 +697,20 @@ Tạo ba lớp con trong một mảng Customer[], mỗi khách dùng máy một 
 
 Minh họa mã khách trùng, lập hóa đơn cho phiên ACTIVE và thanh toán sai tiền. Bắt lỗi cụ thể rồi in thông báo. Các thao tác bị từ chối không làm tăng tiền thực thu trong ví dụ.
 
-### 14.4. NetCafeChecks và DiscountChecks
+### 14.4. NetCafeChecks, DiscountChecks và AccountChecks
 
-Hai class kiểm tra độc lập bằng main, không dùng JUnit.
+Ba class kiểm tra độc lập bằng main, không dùng JUnit.
 
 | Chương trình | Nội dung chính | Số kiểm tra trong lần rà soát |
 |---|---|---:|
 | NetCafeChecks | Dữ liệu mẫu, trạng thái, mã, thời gian, gọi món, hóa đơn, thanh toán | 43 |
 | DiscountChecks | Ba lớp con, tỷ lệ, làm tròn, hóa đơn chốt, thanh toán sau giảm và tỷ lệ sai | 42 |
-| **Tổng** | | **85** |
+| AccountChecks | Dữ liệu tài khoản, đăng ký, username, trạng thái và lịch sử phiên theo tài khoản | 54 |
+| **Tổng** | | **139** |
 
 DiscountChecks có TestCustomer nội bộ để giả lập tỷ lệ không hợp lệ hoặc thay đổi, phục vụ kiểm tra; nó không phải một hạng khách thứ tư dùng trong ứng dụng.
 
-Số kiểm tra là số lần gọi hàm kiểm tra của hai chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
+Số kiểm tra là số lần gọi hàm kiểm tra của ba chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
 
 ## 15. Cách mở và kiểm chứng
 
@@ -710,7 +720,7 @@ Số kiểm tra là số lần gọi hàm kiểm tra của hai chương trình, 
 2. Chọn JDK phù hợp; mã nguồn hướng tới Java 8.
 3. Đảm bảo encoding UTF-8.
 4. Chạy Main, DiscountDemo, ExceptionDemo theo mục đích.
-5. Chạy main của NetCafeChecks và DiscountChecks để kiểm tra.
+5. Chạy main của NetCafeChecks, DiscountChecks và AccountChecks để kiểm tra.
 
 ### 15.2. PowerShell
 
@@ -721,6 +731,7 @@ Set-Location 'D:\OOP\NetCafeMIS'
 .\run.ps1 -ExceptionDemo
 .\run.ps1 -Checks
 .\run.ps1 -DiscountChecks
+.\run.ps1 -AccountChecks
 ```
 
 run.ps1 tìm JDK từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ, biên dịch nguồn và chạy class được chọn. Có thể truyền `-JavaHome 'C:\duong-dan-jdk'`.
@@ -732,15 +743,15 @@ mvn package
 java -jar target/netcafe-mis-1.0.0.jar
 ```
 
-pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy hai chương trình kiểm tra bằng main.
+pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy ba chương trình kiểm tra bằng main.
 
 ### 15.4. Bằng chứng của lần rà soát này
 
-Mã nguồn hiện tại được biên dịch bằng javac của JDK đi kèm IntelliJ với `--release 8`. Main và DiscountDemo cho kết quả nêu trên; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua.
+Đã chạy Maven 3.9.9 clean package trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo và ExceptionDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua.
 
 Ví dụ Java hoàn chỉnh ở mục 13 cũng đã được trích từ tài liệu, biên dịch và chạy riêng; cả tổng hóa đơn và thực thu đều là 135600 như phần giải thích.
 
-Lần rà soát này không dùng kết quả đó để khẳng định độ bao phủ toàn bộ, khả năng chạy đa luồng hoặc trạng thái build Maven. Các giới hạn thiết kế dưới đây được đối chiếu riêng với source và một ví dụ kiểm tra nhỏ.
+Lần rà soát này không dùng kết quả đó để khẳng định độ bao phủ toàn bộ hoặc khả năng chạy đa luồng. Các giới hạn thiết kế dưới đây được đối chiếu riêng với source và một ví dụ kiểm tra nhỏ.
 
 ## 16. Các nguyên lý OOP được thể hiện
 
@@ -750,8 +761,8 @@ Lần rà soát này không dùng kết quả đó để khẳng định độ b
 | Trừu tượng hóa | Customer abstract, IDiscount, Chargeable, Identifiable | Nêu phần chung và hợp đồng mà các lớp phải cung cấp |
 | Kế thừa | NormalCustomer/MemberCustomer/VipCustomer extends Customer | Lớp con dùng chung mã/tên và định nghĩa quy tắc giảm riêng |
 | Đa hình | Customer[] trong demo; ReceiptService đọc qua IDiscount | Cùng lời gọi nhưng tỷ lệ trả về phụ thuộc lớp con thực tế |
-| Quan hệ đối tượng | Session tham chiếu khách/máy; đơn giữ các chi tiết | Quan hệ ERD chuyển thành tham chiếu Java |
-| Xử lý lỗi | 12 exception và ví dụ try/catch | Từ chối thao tác sai bằng một nguyên nhân có thể nhận diện |
+| Quan hệ đối tượng | Session tham chiếu tài khoản/máy; tài khoản tham chiếu khách; đơn giữ các chi tiết | Quan hệ ERD chuyển thành tham chiếu Java |
+| Xử lý lỗi | 14 exception và ví dụ try/catch | Từ chối thao tác sai bằng một nguyên nhân có thể nhận diện |
 
 Đóng gói đã được áp dụng nhưng chưa bảo vệ đầy đủ mọi thay đổi trạng thái. Có private fields không đồng nghĩa mọi đường gọi public đều duy trì toàn bộ nghiệp vụ.
 
@@ -837,7 +848,7 @@ Hai main kiểm tra có giá trị, đã phát hiện và xác nhận nhiều qu
 
 ### 17.7. Số class có quá nhiều không?
 
-46 file nghe có vẻ nhiều, nhưng 12 file là exception ngắn, 4 là enum, 3 là interface và 5 là demo/kiểm tra. Không nên đánh đồng tất cả với 46 nghiệp vụ phức tạp.
+51 file Java gồm 14 exception ngắn, 5 enum, 3 interface và 6 demo/kiểm tra. Không nên đánh đồng số file với số nghiệp vụ phức tạp.
 
 Nhóm model theo ERD và ba lớp con khách có lý do rõ ràng. Nhóm dễ giảm nhất là lớp điều phối và các lớp chuyển tiếp. Mình sẽ ưu tiên **hiểu luồng, bảo vệ trạng thái và giảm việc phải nhảy file**, thay vì cố thêm mẫu thiết kế để tăng số class.
 
@@ -904,7 +915,7 @@ Trình tự đọc:
 
 ```text
 Main.sample()
-→ Customer và ba lớp con
+→ Customer, CustomerAccount và ba lớp con
 → Session / SessionService
 → FoodService / FoodOrderDetail / FoodOrderService
 → Receipt / ReceiptService / IDiscount

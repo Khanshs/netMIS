@@ -25,11 +25,12 @@ public final class NetCafe {
     public void addSection(ComputerSection value) { catalogService.addSection(value); }
     public void addComputer(Computer value) { catalogService.addComputer(value); }
     public void addCustomer(Customer value) { catalogService.addCustomer(value); }
+    public void addAccount(CustomerAccount value) { catalogService.addAccount(value); }
     public void addEmployee(Employee value) { catalogService.addEmployee(value); }
     public void addFood(Food value) { catalogService.addFood(value); }
 
-    public Session openSession(String id, Customer customer, Computer computer, LocalDateTime start) {
-        return sessionService.openSession(id, customer, computer, start);
+    public Session openSession(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
+        return sessionService.openSession(id, account, computer, start);
     }
 
     public void endSession(Session session, LocalDateTime end) {
@@ -59,6 +60,7 @@ public final class NetCafe {
     public List<ComputerSection> getSections() { return Collections.unmodifiableList(data.sections); }
     public List<Computer> getComputers() { return Collections.unmodifiableList(data.computers); }
     public List<Customer> getCustomers() { return Collections.unmodifiableList(data.customers); }
+    public List<CustomerAccount> getAccounts() { return Collections.unmodifiableList(data.accounts); }
     public List<Employee> getEmployees() { return Collections.unmodifiableList(data.employees); }
     public List<Food> getFoods() { return Collections.unmodifiableList(data.foods); }
     public List<Session> getSessions() { return Collections.unmodifiableList(data.sessions); }

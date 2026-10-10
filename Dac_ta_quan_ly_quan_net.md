@@ -9,6 +9,25 @@
 | 2 | Khách hàng, nhân viên, dịch vụ ăn uống |
 | 3 | Hóa đơn, thanh toán, thống kê |
 
+## Bổ sung tài khoản khách hàng trong mã hiện tại
+
+Phần đặc tả gốc bên dưới được giữ làm tài liệu ban đầu. Mã đã mở rộng quan hệ khách–phiên thành **Customer → CustomerAccount → Session** theo yêu cầu bổ sung tài khoản:
+
+- CustomerAccount: accountId, username, passwordHash, balance, status, customer. Chủ tài khoản đã đăng ký; mã và username không trùng; username không phân biệt hoa/thường; số dư không âm.
+- Customer vẫn giữ mã/tên, Normal/Member/VIP và IDiscount.
+- Session giữ account thay cho customer; lấy khách qua account.getCustomer().
+- NetCafeData có accounts; CatalogService có addAccount.
+- Mở phiên yêu cầu tài khoản đã đăng ký, ACTIVE, chưa có phiên ACTIVE và không chồng lấn lịch sử tài khoản/máy.
+- ReceiptService lấy ưu đãi qua session.getAccount().getCustomer().
+- Chưa triển khai đăng nhập/xác thực, nạp/trừ tiền hoặc ràng buộc số tài khoản trên một khách.
+
+```mermaid
+erDiagram
+    Customer ||--o{ CustomerAccount : "sở hữu"
+    CustomerAccount ||--o{ Session : "sử dụng"
+    Computer ||--o{ Session : "ghi nhận"
+```
+
 ## 1. Phát biểu vấn đề, thực thể, thuộc tính, liên kết và ERD
 
 ### 1.1. Phát biểu vấn đề

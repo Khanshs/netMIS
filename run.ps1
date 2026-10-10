@@ -3,7 +3,8 @@ param(
     [switch]$Checks,
     [switch]$ExceptionDemo,
     [switch]$DiscountDemo,
-    [switch]$DiscountChecks
+    [switch]$DiscountChecks,
+    [switch]$AccountChecks
 )
 $ErrorActionPreference = 'Stop'
 $compilerPath = $null
@@ -29,5 +30,6 @@ if ($Checks) { $mainClass = 'netcafe.NetCafeChecks' }
 if ($ExceptionDemo) { $mainClass = 'netcafe.ExceptionDemo' }
 if ($DiscountDemo) { $mainClass = 'netcafe.DiscountDemo' }
 if ($DiscountChecks) { $mainClass = 'netcafe.DiscountChecks' }
+if ($AccountChecks) { $mainClass = 'netcafe.AccountChecks' }
 & $runnerPath -cp $outputPath $mainClass
 if ($LASTEXITCODE -ne 0) { throw 'Program failed.' }

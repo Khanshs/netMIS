@@ -16,6 +16,8 @@ Thời gian có thể do người dùng nhập để mô phỏng, không cần c
 
 Các bước trên được tách vào package `netcafe.Service`: `CatalogService` đăng ký dữ liệu, `SessionService` quản lý phiên, `FoodOrderService` xử lý gọi món, `ReceiptService` lập hóa đơn và `PaymentService` ghi nhận thanh toán. `NetCafe` khởi tạo các service với cùng dữ liệu và cung cấp getter tương ứng. Không xóa các danh sách qua getter; không cung cấp nghiệp vụ xóa làm mất tham chiếu lịch sử. Các thao tác chạy tuần tự.
 
+Ghi nhận món bằng `FoodOrderService.order()` trong ứng dụng. Service tạo đơn rồi gọi `session.recordFoodService(order)` để kiểm tra, khóa và thêm vào phiên; `FoodService.seal()` chỉ khóa nội dung. Hóa đơn lấy tiền món từ `session.getFoodServices()` nên vẫn tính đủ đơn được ghi trực tiếp vào phiên. Các kiểm tra đăng ký món/nhân viên và mã đơn toàn quán thuộc FoodOrderService; gọi trực tiếp trên model chỉ bảo vệ quy tắc của phiên.
+
 ## Tính tiền
 
 - Tiền máy = số giây × đơn giá khu / 3600, HALF_UP đến đồng.

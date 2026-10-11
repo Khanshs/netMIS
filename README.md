@@ -18,6 +18,7 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
 9. Chạy `EarlyEndDemo.main()` để xem khách nghỉ lúc 4h30 sau khi bắt đầu lúc 3h; chạy `EarlyEndChecks.main()` để kiểm tra kết thúc và thanh toán theo giờ thực tế.
+10. Chạy `SessionEndChecks.main()` để kiểm tra kết thúc phiên qua hai API, ghi nhận món và tính đủ tiền món trên hóa đơn.
 
 ## Cấu trúc
 
@@ -43,7 +44,7 @@ NetCafeMIS/
     │   ├── enums/      # 5 enum, gồm AccountStatus
     │   ├── Service/    # Các lớp điều phối nghiệp vụ
     │   └── exception/  # 14 loại lỗi nghiệp vụ và EXCEPTIONS.md
-    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks
+    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks, SessionEndChecks
 ```
 
 Package `netcafe.Service` gom các service theo chức năng:
@@ -68,10 +69,11 @@ java -cp target/classes:target/test-classes netcafe.NetCafeChecks
 java -cp target/classes:target/test-classes netcafe.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.AccountChecks
 java -cp target/classes:target/test-classes netcafe.EarlyEndChecks
+java -cp target/classes:target/test-classes netcafe.SessionEndChecks
 java -cp target/classes netcafe.Demo.EarlyEndDemo
 ```
 
-Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy bốn chương trình kiểm tra độc lập này.
+Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.
 
 ## Chạy trực tiếp bằng PowerShell
 
@@ -84,6 +86,7 @@ Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở l
 .\run.ps1 -AccountChecks
 .\run.ps1 -EarlyEndDemo
 .\run.ps1 -EarlyEndChecks
+.\run.ps1 -SessionEndChecks
 ```
 
 Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Không cần thư viện ngoài.
@@ -125,7 +128,11 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản và 78 kiểm tra kết thúc/thanh toán, tổng cộng 217 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra mới bao gồm kết thúc trực tiếp trên model, gọi món thất bại và bảo vệ trạng thái máy.
+Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 78 kiểm tra kết thúc/thanh toán và 135 kiểm tra riêng về phiên, tổng cộng 352 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra bao gồm kết thúc trực tiếp trên model, gọi món thất bại, bảo vệ trạng thái máy và món ghi trực tiếp vẫn được tính đủ trên hóa đơn.
+
+## Thay đổi Java được lấy từ netMIS-copy
+
+Tham khảo nhánh `codex/customer-accounts`, commit `ab38329` của `khanhtruongdz6085-droid/netMIS-copy`: `Session.recordFoodService(order)` kiểm tra, khóa và ghi nhận đơn; `FoodService.seal()` chỉ khóa nội dung. `FoodOrderService` lưu đơn vào phiên và danh sách chung của quán. `ReceiptService` tính tiền món từ danh sách của phiên để tính đủ cả đơn ghi trực tiếp. Giữ cơ chế `Computer.activeSession`, `occupy()` và `release()` bảo vệ máy của bản hiện tại. Bản C# được tách thành project riêng, không nằm trong mã nguồn Java này.
 
 ## Tài khoản khách hàng
 

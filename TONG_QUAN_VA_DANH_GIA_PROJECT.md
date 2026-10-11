@@ -47,7 +47,7 @@ Project sử dụng danh sách đối tượng Java trong bộ nhớ. Chạy l�
 | Thanh toán | Có một lần thu đủ tiền cho mỗi hóa đơn |
 | Doanh thu thực thu | Có tổng Payment.amount |
 | Exception và demo | Có |
-| Kiểm tra nghiệp vụ | Có bốn chương trình kiểm tra độc lập |
+| Kiểm tra nghiệp vụ | Có năm chương trình kiểm tra độc lập |
 | 30 truy vấn trong phần 4 đặc tả | Chưa viết code; đặc tả gốc nêu phần này là yêu cầu truy vấn chưa code |
 | Tìm kiếm, sửa, xóa toàn bộ danh mục qua một menu | Chưa có |
 | Lưu dữ liệu lâu dài, database | Chưa có |
@@ -255,7 +255,7 @@ Một lần gọi món của một phiên, gồm mã, Session, Employee, thời 
 
 `addItem()` thêm món hoặc gộp số lượng nếu món đó đã có trong cùng lần gọi với cùng giá. Nếu hai giá khác nhau cho cùng món trong một lần gọi, chương trình báo lỗi. `getTotal()` tính tổng các dòng. `seal()` khóa đơn và yêu cầu đơn có ít nhất một dòng.
 
-FoodOrderService tạo đơn, thêm các dòng và khóa đơn trước khi lưu. Khi khóa thành công, FoodService tự liên kết với danh sách gọi món của Session. Đơn thất bại không được thêm vào danh sách; khóa lại đơn đã khóa không tạo bản ghi trùng. Khi đã khóa, không thể thêm món vào đơn đó qua `addItem()`.
+FoodOrderService tạo đơn, thêm các dòng rồi gọi `Session.recordFoodService(order)` để kiểm tra, khóa và ghi nhận vào phiên trước khi lưu vào danh sách chung. `FoodService.seal()` chỉ khóa nội dung đơn. Đơn thất bại không được thêm vào phiên; ghi nhận lại cùng mã đơn bị từ chối. Khi đã khóa, không thể thêm món vào đơn đó qua `addItem()`.
 
 ### 5.8. FoodOrderDetail
 
@@ -419,7 +419,7 @@ Các phiên mới của cùng máy hoặc tài khoản được nhập theo lị
 
 ### 8.3. FoodOrderService
 
-`order()` kiểm tra phiên và nhân viên, thời gian gọi, món đã đăng ký, danh sách dòng món và số lượng. Nó tạo FoodService, thêm FoodOrderDetail, khóa đơn rồi lưu.
+`order()` kiểm tra phiên và nhân viên, thời gian gọi, món đã đăng ký, danh sách dòng món và số lượng. Nó tạo FoodService, thêm FoodOrderDetail, gọi `session.recordFoodService()` rồi lưu vào danh sách chung của quán.
 
 Có hai overload:
 
@@ -430,7 +430,7 @@ Ba mảng `Food[]`, `int[]`, `BigDecimal[]` cần cùng độ dài và cùng th�
 
 ### 8.4. ReceiptService
 
-Kiểm tra phiên đã COMPLETED, nhân viên ACTIVE và phiên chưa có hóa đơn. Cộng tổng các FoodService thuộc phiên, lấy tiền máy gốc từ Session, lấy tỷ lệ qua IDiscount rồi tạo Receipt.
+Kiểm tra phiên đã COMPLETED, nhân viên ACTIVE và phiên chưa có hóa đơn. Cộng tổng từ `session.getFoodServices()` để tính đủ cả đơn được ghi trực tiếp vào phiên, lấy tiền máy gốc từ Session, lấy tỷ lệ qua IDiscount rồi tạo Receipt.
 
 Đây là nơi tập hợp dữ liệu để lập hóa đơn. Các phép nhân tỷ lệ, làm tròn và chốt khoản giảm được thực hiện trong Receipt.
 
@@ -714,11 +714,12 @@ Bốn class kiểm tra độc lập bằng main, không dùng JUnit.
 | DiscountChecks | Ba lớp con, tỷ lệ, làm tròn, hóa đơn chốt, thanh toán sau giảm và tỷ lệ sai | 42 |
 | AccountChecks | Dữ liệu tài khoản, đăng ký, username, trạng thái và lịch sử phiên theo tài khoản | 54 |
 | EarlyEndChecks | Kết thúc qua service hoặc model, thời gian, thanh toán, lịch sử gọi món và bảo vệ máy | 78 |
-| **Tổng** | | **217** |
+| SessionEndChecks | Kết thúc qua hai API, ghi nhận đơn, danh sách chỉ đọc và món ghi trực tiếp trên hóa đơn | 135 |
+| **Tổng** | | **352** |
 
 DiscountChecks có TestCustomer nội bộ để giả lập tỷ lệ không hợp lệ hoặc thay đổi, phục vụ kiểm tra; nó không phải một hạng khách thứ tư dùng trong ứng dụng.
 
-Số kiểm tra là số lần gọi hàm kiểm tra của bốn chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
+Số kiểm tra là số lần gọi hàm kiểm tra của năm chương trình, không phải phần trăm độ bao phủ code. Chúng không được Maven Surefire tự chạy theo thiết kế hiện tại.
 
 ## 15. Cách mở và kiểm chứng
 
@@ -728,7 +729,7 @@ Số kiểm tra là số lần gọi hàm kiểm tra của bốn chương trình
 2. Chọn JDK phù hợp; mã nguồn hướng tới Java 8.
 3. Đảm bảo encoding UTF-8.
 4. Chạy Main, DiscountDemo, ExceptionDemo hoặc EarlyEndDemo theo mục đích.
-5. Chạy main của NetCafeChecks, DiscountChecks, AccountChecks và EarlyEndChecks để kiểm tra.
+5. Chạy main của NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks và SessionEndChecks để kiểm tra.
 
 ### 15.2. PowerShell
 
@@ -742,6 +743,7 @@ Set-Location 'D:\OOP\NetCafeMIS'
 .\run.ps1 -AccountChecks
 .\run.ps1 -EarlyEndDemo
 .\run.ps1 -EarlyEndChecks
+.\run.ps1 -SessionEndChecks
 ```
 
 run.ps1 tìm JDK từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ, biên dịch nguồn và chạy class được chọn. Có thể truyền `-JavaHome 'C:\duong-dan-jdk'`.
@@ -753,11 +755,11 @@ mvn package
 java -jar target/netcafe-mis-1.0.0.jar
 ```
 
-pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy bốn chương trình kiểm tra bằng main.
+pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng Maven, cần một môi trường có Maven và các plugin tương ứng. Chạy package không thay thế việc chạy năm chương trình kiểm tra bằng main.
 
 ### 15.4. Bằng chứng của lần rà soát này
 
-Bản sửa luồng kết thúc phiên đã được biên dịch bằng JDK của IntelliJ với javac --release 8. Main khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, EarlyEndChecks báo 78 kiểm tra qua. Tổng cộng 217 kiểm tra đều qua.
+Bản Java được gộp cách ghi nhận món từ commit ab38329 của netMIS-copy và giữ cơ chế sở hữu máy của bản hiện tại. Biên dịch bằng JDK của IntelliJ với javac --release 8. Main khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, EarlyEndChecks báo 78 kiểm tra qua, SessionEndChecks báo 135 kiểm tra qua. Tổng cộng 352 kiểm tra đều qua.
 
 Ví dụ Java hoàn chỉnh ở mục 13 cũng đã được trích từ tài liệu, biên dịch và chạy riêng; cả tổng hóa đơn và thực thu đều là 135600 như phần giải thích.
 

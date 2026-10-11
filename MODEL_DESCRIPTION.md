@@ -42,6 +42,11 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Nếu kiểm tra thất bại, giờ kết thúc và trạng thái phiên/máy giữ nguyên. Gọi trực tiếp phương thức này cũng được kiểm tra đầy đủ.
 - Nếu không hợp lệ sẽ ném ra ngoại lệ tương ứng (`SessionStateException`, `InvalidTimeException`).
 
+#### `recordFoodService(FoodService service)`
+- Ghi nhận một lần gọi món vào phiên: kiểm tra đơn không null, phiên ACTIVE, đúng phiên, giờ gọi không trước giờ bắt đầu và mã đơn không trùng trong phiên.
+- Khóa đơn bằng `seal()` rồi thêm vào danh sách chỉ đọc của phiên. Nếu thất bại, danh sách giữ nguyên.
+- `FoodOrderService.order()` gọi phương thức này rồi lưu đơn vào danh sách chung của quán. Gọi trực tiếp trên phiên không thêm vào danh sách chung; hóa đơn vẫn tính đủ từ `session.getFoodServices()`.
+
 #### `amountAt(LocalDateTime at)`
 - Tính số tiền phát sinh đến thời điểm `at`.
 - Nếu thời điểm `at` trước thời gian bắt đầu hoặc null thì báo lỗi.
@@ -73,7 +78,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `employee`: nhân viên xử lý đơn hàng.
 - `timeStartService`: thời điểm bắt đầu phục vụ đơn.
 - `details`: danh sách các dòng đơn hàng (`FoodOrderDetail`).
-- `sealed`: cờ báo hiệu đơn hàng đã được ghi nhận và không thể chỉnh sửa nữa.
+- `sealed`: cờ báo hiệu đơn hàng đã được khóa và không thể chỉnh sửa nữa; thao tác ghi nhận vào phiên thuộc `Session.recordFoodService()`.
 
 ### Constructor
 ```java
@@ -105,8 +110,8 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 #### `seal()`
 - Khóa đơn hàng để không thể chỉnh sửa.
 - Nếu đơn hàng chưa có dòng nào thì ném ngoại lệ `InvalidOrderException`.
-- Trước khi khóa, ghi nhận đơn vào danh sách nội bộ của Session. Phiên phải còn ACTIVE và giờ gọi không trước giờ bắt đầu; đơn thất bại không được thêm vào danh sách.
-- Gọi lại trên đơn đã khóa không ghi nhận thêm lần nữa.
+- Chỉ khóa nội dung đơn; không tự ghi nhận vào phiên. Dùng `session.recordFoodService(order)` để ghi nhận.
+- Gọi lại trên đơn đã khóa không thay đổi nội dung. Ghi nhận lại cùng mã đơn qua phiên bị từ chối.
 
 #### `calculateAmount()`
 - Duyệt qua tất cả `FoodOrderDetail` trong `details`.

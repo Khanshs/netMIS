@@ -13,8 +13,8 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 2. Trong IntelliJ IDEA, chọn **File → Open**, chọn thư mục `netMIS` vừa clone (hoặc file `pom.xml` trong thư mục đó), rồi mở như một Maven project.
 3. Chọn Project SDK là JDK 8 hoặc mới hơn và dùng encoding UTF-8. Chờ IntelliJ import Maven xong.
 4. Chạy `src/main/java/netcafe/Main.java` để xem dữ liệu mẫu.
-5. Chạy `src/main/java/netcafe/ExceptionDemo.java` để xem xử lý exception.
-6. Chạy `src/test/java/netcafe/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
+5. Chạy `src/test/java/netcafe/Demo/ExceptionDemo.java` để xem xử lý exception.
+6. Chạy `src/test/java/netcafe/Checks/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
 9. Chạy `EarlyEndDemo.main()` để xem khách nghỉ lúc 4h30 sau khi bắt đầu lúc 3h; chạy `EarlyEndChecks.main()` để kiểm tra kết thúc và thanh toán theo giờ thực tế.
@@ -33,18 +33,18 @@ NetCafeMIS/
 └── src/
     ├── main/java/netcafe/
     │   ├── Main.java
-    │   ├── ExceptionDemo.java
-    │   ├── DiscountDemo.java
-    │   ├── EarlyEndDemo.java
     │   ├── Identifiable.java
     │   ├── Chargeable.java
     │   ├── IDiscount.java
-    │   ├── model/      # 11 lớp thực thể, gồm CustomerAccount, Customer trừu tượng, Checks nội bộ
-    │   │   └── customer/ # NormalCustomer, MemberCustomer, VipCustomer
+    │   ├── model/      # Session, CustomerAccount, FoodOrderDetail, Receipt, Payment, Checks
+    │   │   ├── NetSpecs/ # Computer, ComputerSection, Employee, Food
+    │   │   └── customer/ # Customer, NormalCustomer, MemberCustomer, VipCustomer
     │   ├── enums/      # 5 enum, gồm AccountStatus
-    │   ├── Service/    # Các lớp điều phối nghiệp vụ
+    │   ├── Service/    # Các service, thực thể FoodService và NetCafeData nội bộ
     │   └── exception/  # 14 loại lỗi nghiệp vụ và EXCEPTIONS.md
-    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks, SessionEndChecks
+    └── test/java/netcafe/
+        ├── Checks/    # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks, SessionEndChecks
+        └── Demo/      # DiscountDemo, ExceptionDemo, EarlyEndDemo
 ```
 
 Package `netcafe.Service` gom các service theo chức năng:
@@ -58,7 +58,9 @@ Package `netcafe.Service` gom các service theo chức năng:
 | `PaymentService` | Thanh toán và tính doanh thu thực thu |
 | `NetCafe` | Khởi tạo các service với cùng dữ liệu, cung cấp getter service và danh sách |
 
-`NetCafeData` và `ServiceChecks` là lớp nội bộ trong package. Các service dùng chung danh sách của một `NetCafe`; `Main.sample()` minh họa gọi trực tiếp từng service qua `getCatalogService()`, `getSessionService()` và các getter tương ứng. `model.FoodService` vẫn là thực thể một lần gọi món trong ERD; nghiệp vụ xử lý thực thể này nằm ở `Service.FoodOrderService`.
+`NetCafeData` và `ServiceChecks` là lớp nội bộ trong package `netcafe.Service`. Các service dùng chung danh sách của một `NetCafe`; `Main.sample()` minh họa gọi trực tiếp từng service qua `getCatalogService()`, `getSessionService()` và các getter tương ứng. `Service.FoodService` vẫn là thực thể một lần gọi món trong ERD; nghiệp vụ xử lý thực thể này nằm ở `Service.FoodOrderService`.
+
+`model.Checks` và các hàm kiểm tra là public để các package con sử dụng. `FoodOrderDetail` có constructor và `addQuantity()` public để `Service.FoodService` gọi được; khi đơn đã khóa, không thể đổi số lượng kể cả gọi trực tiếp trên chi tiết món. `NetCafeData` được giữ trong `Service` để danh sách dùng chung không phải công khai ra ngoài package.
 
 ## Chạy bằng Maven
 
@@ -70,7 +72,7 @@ java -cp target/classes:target/test-classes netcafe.Checks.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.Checks.AccountChecks
 java -cp target/classes:target/test-classes netcafe.Checks.EarlyEndChecks
 java -cp target/classes:target/test-classes netcafe.Checks.SessionEndChecks
-java -cp target/classes netcafe.Demo.EarlyEndDemo
+java -cp target/classes:target/test-classes netcafe.Demo.EarlyEndDemo
 ```
 
 Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.
@@ -128,7 +130,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã build bằng Maven 3.9.9 với JDK 21 và `-Dmaven.compiler.release=8` thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 40 kiểm tra kết thúc/thanh toán theo giờ thực tế và 130 kiểm tra kết thúc phiên qua cả hai API, tổng cộng 309 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
+Bản sửa sau khi chuyển package đã được biên dịch riêng mã nguồn chính và mã kiểm tra/demo bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 40 kiểm tra kết thúc/thanh toán theo giờ thực tế và 132 kiểm tra kết thúc phiên qua cả hai API, tổng cộng 311 kiểm tra đều qua. Main cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Có kiểm tra ngăn thay đổi số lượng trực tiếp qua FoodOrderDetail khi đơn đã khóa.
 
 ## Tài khoản khách hàng
 

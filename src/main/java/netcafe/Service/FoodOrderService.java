@@ -5,7 +5,6 @@ import netcafe.exception.*;
 import netcafe.model.*;
 import netcafe.model.NetSpecs.Employee;
 import netcafe.model.NetSpecs.Food;
-import netcafe.model.NetSpecs.NetCafeData;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

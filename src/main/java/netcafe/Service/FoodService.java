@@ -38,6 +38,7 @@ public final class FoodService implements Identifiable, Chargeable {
   public Employee getEmployee() { return employee; }
   public LocalDateTime getTimeStartService() { return timeStartService; }
   public List<FoodOrderDetail> getDetails() { return Collections.unmodifiableList(details); }
+  public boolean isSealed() { return sealed; }
 
   public void addItem(Food food, int quantity, BigDecimal priceAtOrder) {
     if (sealed) throw new InvalidOrderException("Order is recorded and cannot be changed: " + serviceId);

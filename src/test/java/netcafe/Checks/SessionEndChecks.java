@@ -131,6 +131,8 @@ public final class SessionEndChecks {
         equal(true, view.get(1) == recorded);
         equal(true, cafe.getServices().get(3) == recorded);
         fails(InvalidOrderException.class, () -> recorded.addItem(food, 1, BigDecimal.valueOf(13000)));
+        fails(InvalidOrderException.class, () -> recorded.getDetails().get(0).addQuantity(1));
+        equal(1, recorded.getDetails().get(0).getOrderQuantity());
         fails(InvalidTimeException.class, () -> session.endSession(time(11, 20)));
         equal(null, session.getTimeEnd());
         equal(SessionStatus.ACTIVE, session.getSessionStatus());

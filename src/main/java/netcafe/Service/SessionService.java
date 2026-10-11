@@ -4,7 +4,6 @@ import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
 import netcafe.model.NetSpecs.Computer;
-import netcafe.model.NetSpecs.NetCafeData;
 
 import java.time.LocalDateTime;
 

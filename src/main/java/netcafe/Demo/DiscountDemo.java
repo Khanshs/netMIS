@@ -1,7 +1,6 @@
 package netcafe.Demo;
 
 import netcafe.Service.NetCafe;
-import netcafe.model.NET.*;
 import netcafe.model.customer.*;
 import netcafe.enums.*;
 import netcafe.model.*;

@@ -2,7 +2,6 @@ package netcafe;
 import netcafe.Service.*;
 import netcafe.enums.*;
 import netcafe.model.*;
-import netcafe.model.NET.*;
 import netcafe.model.customer.NormalCustomer;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

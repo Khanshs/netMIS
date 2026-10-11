@@ -3,7 +3,7 @@ package netcafe.Service;
 import netcafe.Identifiable;
 import netcafe.enums.EmployeeStatus;
 import netcafe.exception.*;
-import netcafe.model.NET.Employee;
+import netcafe.model.Employee;
 import java.util.List;
 
 /** Validation helpers internal to the service package. */

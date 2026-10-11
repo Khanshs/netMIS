@@ -5,11 +5,9 @@ import netcafe.IDiscount;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
-import netcafe.model.NET.Employee;
-import netcafe.model.NET.Session;
-
 import java.math.BigDecimal;
-
+import java.time.LocalDateTime;
+import java.util.*;
 import static netcafe.Service.ServiceChecks.*;
 
 public final class ReceiptService {
@@ -31,8 +29,8 @@ public final class ReceiptService {
             if (receipt.getSession() == session) throw new ReceiptAlreadyExistsException("Session already has a receipt");
         }
         BigDecimal serviceAmount = BigDecimal.ZERO;
-        for (FoodService service : session.getFoodServices()) {
-            serviceAmount = serviceAmount.add(service.getTotal());
+        for (FoodService service : data.services) {
+            if (service.getSession() == session) serviceAmount = serviceAmount.add(service.getTotal());
         }
         IDiscount policy = session.getAccount().getCustomer();
         Receipt receipt = new Receipt(id, session, employee, serviceAmount, session.calculateAmount(), policy);

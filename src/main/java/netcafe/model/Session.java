@@ -1,15 +1,10 @@
-package netcafe.model.NET;
+package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.enums.SessionStatus;
 import netcafe.exception.DuplicateIdException;
-import netcafe.exception.InvalidOrderException;
 import netcafe.exception.InvalidTimeException;
 import netcafe.exception.SessionStateException;
-import netcafe.model.Checks;
-import netcafe.model.CustomerAccount;
-import netcafe.model.FoodService;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -30,7 +25,7 @@ public final class Session implements Identifiable, Chargeable {
 
   //Constructor
   public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
-    sessionId= Checks.id(id);
+    sessionId=Checks.id(id);
     this.account=Checks.required(account, "account");
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");
@@ -47,20 +42,18 @@ public final class Session implements Identifiable, Chargeable {
   public SessionStatus getSessionStatus() { return sessionStatus; }
   public List<FoodService> getFoodServices() { return Collections.unmodifiableList(foodServices); }
 
-  /** Validate and lock an order before linking it to this session. */
-  public void recordFoodService(FoodService service) {
-    Checks.required(service, "foodService");
-    if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Order requires active session: " + sessionId);
-    if (service.getSession() != this) throw new InvalidOrderException("Order belongs to another session");
+  // FoodService records itself only after all of its lines have been validated.
+  void recordOrder(FoodService service) {
+    if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Order requires active session");
+    if (service.getSession() != this) throw new SessionStateException("Order belongs to another session");
     if (service.getTimeStartService().isBefore(timeStart)) throw new InvalidTimeException("Order time precedes session start");
     for (FoodService old : foodServices) {
       if (old.getId().equals(service.getId())) throw new DuplicateIdException("Duplicate order ID: " + service.getId());
     }
-    service.seal();
     foodServices.add(service);
   }
 
-  /** Both direct callers and SessionService use these completion rules. */
+  /** Ends at the supplied simulated time; direct calls enforce the same rules as the service. */
   public void endSession(LocalDateTime end) {
     if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Session is already completed: " + sessionId);
     if (end == null || !end.isAfter(timeStart)) throw new InvalidTimeException("End must be after start: " + sessionId);

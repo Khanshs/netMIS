@@ -14,7 +14,7 @@ Tất cả exception do project định nghĩa nằm trong `netcafe.exception`, 
 | `SessionStateException` | Kết thúc phiên đã hoàn tất, gọi món trên phiên đã kết thúc, lập hóa đơn/tiền chốt cho phiên ACTIVE | Kiểm tra trạng thái và thực hiện đúng trình tự |
 | `InvalidTimeException` | Thiếu thời gian phiên; kết thúc không sau bắt đầu; phiên chồng lấn lịch sử; gọi món trước phiên; kết thúc trước lần gọi món; thanh toán trước kết thúc | Sửa thời gian; các phiên mới được nhập theo lịch sử không lùi |
 | `InactiveEmployeeException` | Nhân viên INACTIVE xử lý gọi món hoặc lập hóa đơn | Chọn nhân viên ACTIVE |
-| `InvalidOrderException` | Danh sách món rỗng, số dòng không khớp, số lượng không dương/tràn int, một món có hai giá trong cùng lần gọi, sửa đơn đã ghi nhận, liên kết đơn với sai phiên | Sửa dữ liệu món hoặc tạo lần gọi món mới |
+| `InvalidOrderException` | Danh sách món rỗng, số dòng không khớp, số lượng không dương/tràn int, một món có hai giá trong cùng lần gọi, sửa đơn đã ghi nhận | Sửa dữ liệu món hoặc tạo lần gọi món mới |
 | `ReceiptAlreadyExistsException` | Lập hóa đơn thứ hai cho cùng phiên | Dùng hóa đơn đã có |
 | `PaymentAlreadyExistsException` | Thanh toán lại hóa đơn đã có Payment | Tra cứu giao dịch đã thu |
 | `PaymentAmountMismatchException` | Số tiền thanh toán khác tổng hóa đơn, cả thiếu và thừa | Thu đúng toàn bộ tổng tiền một lần |
@@ -24,5 +24,3 @@ Khi nhiều điều kiện cùng sai, chương trình trả lỗi đầu tiên t
 Mọi thao tác nghiệp vụ đi qua các lớp trong `netcafe.Service`: `CatalogService`, `SessionService`, `FoodOrderService`, `ReceiptService`, `PaymentService`, được khởi tạo bởi `NetCafe` với cùng dữ liệu. Kiểm tra xong mới thêm đối tượng hoặc đổi trạng thái; thao tác thất bại không ghi thêm phiên, đơn món, hóa đơn hoặc giao dịch. Đơn gọi món đã ghi nhận được khóa, giá món lúc gọi được giữ riêng. Giá khu và khu của máy được cố định bằng thuộc tính final để giữ tiền máy lịch sử. Các getter danh sách trả danh sách chỉ đọc.
 
 Chạy `ExceptionDemo.main()` để xem ví dụ bắt từng loại lỗi cụ thể. Chạy `NetCafeChecks.main()` để kiểm tra 12 loại lỗi ban đầu, dữ liệu mẫu, trạng thái sau thất bại, giá lịch sử, gộp món và luồng thanh toán thành công. `AccountChecks.main()` kiểm tra thêm username trùng, chủ tài khoản chưa đăng ký, tài khoản không hoạt động và lịch sử phiên theo tài khoản. Không dùng `catch (Exception)` để bỏ qua lỗi lập trình.
-
-`SessionEndChecks.main()` kiểm tra kết thúc qua service và gọi trực tiếp `session.endSession(end)`: kết thúc trước lần gọi món ném `InvalidTimeException`, kết thúc lại ném `SessionStateException`, và thất bại giữ nguyên giờ kết thúc cùng trạng thái phiên/máy. `Session` tự kiểm tra các đơn đã liên kết; `SessionService` kiểm tra phiên thuộc quán rồi gọi cùng phương thức đó.

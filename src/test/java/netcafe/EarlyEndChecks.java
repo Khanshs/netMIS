@@ -4,7 +4,6 @@ import netcafe.Service.NetCafe;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
-import netcafe.model.NET.*;
 import netcafe.model.customer.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -181,7 +180,7 @@ public final class EarlyEndChecks {
 
         FoodService lateOrder = new FoodService("SV-LATE", session, direct.employee, orderTime.plusMinutes(1));
         lateOrder.addItem(food, 1, food.getPrice());
-        fails(SessionStateException.class, () -> session.recordFoodService(lateOrder));
+        fails(SessionStateException.class, lateOrder::seal);
         equal(1, session.getFoodServices().size());
         fails(SessionStateException.class, () -> session.endSession(orderTime.plusHours(1)));
 

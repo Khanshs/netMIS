@@ -2,8 +2,6 @@ package netcafe;
 
 import netcafe.Demo.DiscountDemo;
 import netcafe.Service.NetCafe;
-import netcafe.model.NET.Employee;
-import netcafe.model.NET.Session;
 import netcafe.model.customer.*;
 import netcafe.enums.*;
 import netcafe.exception.*;

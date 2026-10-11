@@ -2,10 +2,6 @@ package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.exception.InvalidOrderException;
-import netcafe.model.NET.Employee;
-import netcafe.model.NET.Food;
-import netcafe.model.NET.Session;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -51,6 +47,7 @@ public final class FoodService implements Identifiable, Chargeable {
   public void seal() {
     if (sealed) return;
     if (details.isEmpty()) throw new InvalidOrderException("Order must have at least one line");
+    session.recordOrder(this);
     sealed = true;
   }
   public BigDecimal calculateAmount() { BigDecimal total=BigDecimal.ZERO; for (FoodOrderDetail d: details) total=total.add(d.calculateAmount()); return total; }

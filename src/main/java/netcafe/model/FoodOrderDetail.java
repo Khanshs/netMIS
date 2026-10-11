@@ -1,8 +1,6 @@
 package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.exception.InvalidOrderException;
-import netcafe.model.NET.Food;
-
 import java.math.BigDecimal;
 
 public final class FoodOrderDetail implements Chargeable {

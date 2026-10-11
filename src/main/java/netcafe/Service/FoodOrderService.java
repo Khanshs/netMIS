@@ -3,13 +3,9 @@ package netcafe.Service;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
-import netcafe.model.NET.Employee;
-import netcafe.model.NET.Food;
-import netcafe.model.NET.Session;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+import java.util.*;
 import static netcafe.Service.ServiceChecks.*;
 
 public final class FoodOrderService {
@@ -54,7 +50,7 @@ public final class FoodOrderService {
             registered(data.foods, items[i]);
             service.addItem(items[i], quantities[i], prices[i]);
         }
-        session.recordFoodService(service);
+        service.seal();
         data.services.add(service);
         return service;
     }

@@ -45,7 +45,9 @@ public final class FoodService implements Identifiable, Chargeable {
   }
   public BigDecimal getTotal() { return calculateAmount(); }
   public void seal() {
+    if (sealed) return;
     if (details.isEmpty()) throw new InvalidOrderException("Order must have at least one line");
+    session.recordOrder(this);
     sealed = true;
   }
   public BigDecimal calculateAmount() { BigDecimal total=BigDecimal.ZERO; for (FoodOrderDetail d: details) total=total.add(d.calculateAmount()); return total; }

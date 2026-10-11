@@ -12,6 +12,8 @@
 
 Khách muốn nghỉ lúc nào thì gọi endSession(session, giờ nghỉ thực tế) lúc đó, rồi issueReceipt và pay. timeEnd ban đầu là null, chỉ được ghi khi kết thúc phiên. Ví dụ bắt đầu 3h, nghỉ 4h30: tiền máy tính 90 phút; được thanh toán lúc 4h30 hoặc sau đó. isBefore trong Payment ngăn thanh toán trước giờ nghỉ đã ghi. Không cần lưu giờ kết thúc dự kiến hoặc gọi endSession trước khi khách nghỉ.
 
+Thời gian có thể do người dùng nhập để mô phỏng, không cần chờ thời gian thực. SessionService xác nhận phiên thuộc quán rồi gọi Session.endSession(end). Session giữ danh sách các lần gọi món đã ghi nhận để tự kiểm tra giờ kết thúc, kể cả khi được gọi trực tiếp. Chỉ khi mọi điều kiện hợp lệ mới giải phóng máy và cập nhật phiên; thao tác sai giữ nguyên trạng thái. Khi một phiên đã giữ máy, không thể đổi trạng thái máy thủ công hoặc tạo phiên khác trên máy đó.
+
 Các bước trên được tách vào package `netcafe.Service`: `CatalogService` đăng ký dữ liệu, `SessionService` quản lý phiên, `FoodOrderService` xử lý gọi món, `ReceiptService` lập hóa đơn và `PaymentService` ghi nhận thanh toán. `NetCafe` khởi tạo các service với cùng dữ liệu và cung cấp getter tương ứng. Không xóa các danh sách qua getter; không cung cấp nghiệp vụ xóa làm mất tham chiếu lịch sử. Các thao tác chạy tuần tự.
 
 ## Tính tiền

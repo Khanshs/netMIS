@@ -14,6 +14,7 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 - `timeStart`: thời điểm bắt đầu phiên.
 - `timeEnd`: thời điểm khách nghỉ thực tế (null nếu phiên chưa hoàn tất); dùng để tính tiền và kiểm tra thanh toán.
 - `sessionStatus`: trạng thái phiên, ví dụ `ACTIVE` hoặc `COMPLETED`.
+- `foodServices`: danh sách các lần gọi món đã ghi nhận của phiên; getter chỉ cho đọc.
 
 ### Constructor
 ```java
@@ -23,6 +24,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Kiểm tra `id` không rỗng bằng `Checks.id(id)`.
 - Kiểm tra `account`, `computer`, `start` không null bằng `Checks.required(...)`.
 - Mặc định trạng thái khởi tạo là `SessionStatus.ACTIVE`.
+- Yêu cầu máy đang `AVAILABLE`, giữ máy cho phiên này và chuyển máy sang `IN_USE`. Trong ứng dụng, tạo phiên qua `cafe.openSession(...)` để service kiểm tra thêm tài khoản đã đăng ký và lịch sử.
 
 ### Phương thức chính
 - `getId()`, `getSessionId()`: trả về mã phiên.
@@ -30,11 +32,14 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `getComputer()`: lấy máy tính.
 - `getTimeStart()`, `getTimeEnd()`: lấy thời điểm bắt đầu/kết thúc.
 - `getSessionStatus()`: lấy trạng thái phiên.
+- `getFoodServices()`: lấy danh sách chỉ đọc của các lần gọi món đã được khóa và ghi nhận.
 
-#### `complete(LocalDateTime end)`
+#### `endSession(LocalDateTime end)`
 - Chỉ cho phép kết thúc phiên nếu trạng thái hiện tại là `ACTIVE`.
 - Kiểm tra thời điểm kết thúc phải khác null và phải sau thời điểm bắt đầu.
-- Nếu hợp lệ thì đặt `timeEnd` và đổi trạng thái thành `COMPLETED`.
+- Kiểm tra thời điểm kết thúc không trước bất kỳ lần gọi món đã ghi nhận nào.
+- Nếu hợp lệ thì giải phóng đúng máy của phiên, đặt `timeEnd`, đổi phiên thành `COMPLETED` và máy thành `AVAILABLE`.
+- Nếu kiểm tra thất bại, giờ kết thúc và trạng thái phiên/máy giữ nguyên. Gọi trực tiếp phương thức này cũng được kiểm tra đầy đủ.
 - Nếu không hợp lệ sẽ ném ra ngoại lệ tương ứng (`SessionStateException`, `InvalidTimeException`).
 
 #### `amountAt(LocalDateTime at)`
@@ -53,6 +58,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Không thể tính tiền khi phiên đang hoạt động mà chưa có thời điểm kết thúc.
 - Tổng tiền phụ thuộc vào thời gian thực sự sử dụng và giá theo giờ của khu vực máy.
 - Khi khách muốn nghỉ, gọi SessionService.endSession(session, giờ nghỉ thực tế), sau đó lập hóa đơn và thanh toán. Ví dụ bắt đầu 3h, nghỉ 4h30: tính tiền cho 90 phút, được thanh toán lúc 4h30. Không đăng ký giờ kết thúc trước.
+- Giờ bắt đầu và kết thúc có thể do người dùng nhập để mô phỏng; không cần chờ đồng hồ thực tế. Service xác nhận phiên thuộc quán rồi gọi `session.endSession(end)`.
 
 ---
 
@@ -99,6 +105,8 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 #### `seal()`
 - Khóa đơn hàng để không thể chỉnh sửa.
 - Nếu đơn hàng chưa có dòng nào thì ném ngoại lệ `InvalidOrderException`.
+- Trước khi khóa, ghi nhận đơn vào danh sách nội bộ của Session. Phiên phải còn ACTIVE và giờ gọi không trước giờ bắt đầu; đơn thất bại không được thêm vào danh sách.
+- Gọi lại trên đơn đã khóa không ghi nhận thêm lần nữa.
 
 #### `calculateAmount()`
 - Duyệt qua tất cả `FoodOrderDetail` trong `details`.

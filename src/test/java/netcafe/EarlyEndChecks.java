@@ -135,6 +135,83 @@ public final class EarlyEndChecks {
             discounted.cafe.pay("P01", discountedReceipt, actualEnd, PaymentMethod.CASH, discountedReceipt.getTotalAmount());
             equal(expected[i], discounted.cafe.collectedAmount());
         }
+        checkDirectEnd();
         System.out.println("EarlyEndChecks OK: " + checks + " checks");
+    }
+
+    private static void checkDirectEnd() {
+        Fixture direct = new Fixture(new NormalCustomer("C07", "Direct end"));
+        Session session = direct.open();
+        Food food = new Food("F01", "Combo", BigDecimal.valueOf(10000));
+        direct.cafe.addFood(food);
+        LocalDateTime orderTime = START.plusMinutes(100);
+
+        // A rejected multi-line order must not become part of the session's history.
+        fails(InvalidOrderException.class, () -> direct.cafe.order("SV-BAD", session, direct.employee,
+                orderTime.plusHours(1), new Food[]{food, food}, new int[]{1, 0}));
+        equal(0, session.getFoodServices().size());
+        equal(0, direct.cafe.getServices().size());
+        FoodService order = direct.cafe.order("SV01", session, direct.employee,
+                orderTime, new Food[]{food}, new int[]{1});
+        equal(order, session.getFoodServices().get(0));
+        fails(UnsupportedOperationException.class, () -> session.getFoodServices().clear());
+        order.seal();
+        equal(1, session.getFoodServices().size());
+
+        fails(InvalidTimeException.class, () -> session.endSession(null));
+        fails(InvalidTimeException.class, () -> session.endSession(START));
+        fails(InvalidTimeException.class, () -> session.endSession(START.minusMinutes(1)));
+        // Regression: the model itself must reject an end before a recorded order.
+        fails(InvalidTimeException.class, () -> session.endSession(START.plusMinutes(90)));
+        equal(null, session.getTimeEnd());
+        equal(SessionStatus.ACTIVE, session.getSessionStatus());
+        equal(ComputerStatus.IN_USE, direct.computer.getComputerStatus());
+        fails(SessionStateException.class, () -> direct.cafe.issueReceipt("R01", session, direct.employee));
+        equal(0, direct.cafe.getReceipts().size());
+
+        session.endSession(orderTime);
+        equal(orderTime, session.getTimeEnd());
+        equal(SessionStatus.COMPLETED, session.getSessionStatus());
+        equal(ComputerStatus.AVAILABLE, direct.computer.getComputerStatus());
+        Receipt receipt = direct.cafe.issueReceipt("R01", session, direct.employee);
+        equal(43333, receipt.getTotalAmount());
+        direct.cafe.pay("P01", receipt, orderTime, PaymentMethod.CASH, receipt.getTotalAmount());
+        equal(43333, direct.cafe.collectedAmount());
+
+        FoodService lateOrder = new FoodService("SV-LATE", session, direct.employee, orderTime.plusMinutes(1));
+        lateOrder.addItem(food, 1, food.getPrice());
+        fails(SessionStateException.class, lateOrder::seal);
+        equal(1, session.getFoodServices().size());
+        fails(SessionStateException.class, () -> session.endSession(orderTime.plusHours(1)));
+
+        Session next = direct.cafe.openSession("S02", direct.account, direct.computer, orderTime);
+        // Neither a detached session nor a manual status change may release the new session's machine.
+        fails(ComputerUnavailableException.class, () -> new Session("DETACHED", direct.account, direct.computer, orderTime));
+        fails(ComputerUnavailableException.class, () -> direct.computer.setComputerStatus(ComputerStatus.AVAILABLE));
+        fails(ComputerUnavailableException.class, () -> direct.computer.setComputerStatus(ComputerStatus.MAINTENANCE));
+        fails(SessionStateException.class, () -> direct.cafe.endSession(session, orderTime.plusHours(1)));
+        equal(SessionStatus.ACTIVE, next.getSessionStatus());
+        equal(ComputerStatus.IN_USE, direct.computer.getComputerStatus());
+        equal(orderTime, session.getTimeEnd());
+        next.endSession(orderTime.plusHours(1));
+        equal(ComputerStatus.AVAILABLE, direct.computer.getComputerStatus());
+        direct.computer.setComputerStatus(ComputerStatus.MAINTENANCE);
+        fails(ComputerUnavailableException.class, () -> new Session("MAINTENANCE", direct.account, direct.computer, orderTime.plusHours(2)));
+        direct.computer.setComputerStatus(ComputerStatus.AVAILABLE);
+        fails(ComputerUnavailableException.class, () -> direct.computer.setComputerStatus(ComputerStatus.IN_USE));
+        equal(ComputerStatus.AVAILABLE, direct.computer.getComputerStatus());
+
+        Fixture outOfOrder = new Fixture(new NormalCustomer("C08", "Unsorted orders"));
+        Session unordered = outOfOrder.open();
+        outOfOrder.cafe.addFood(food);
+        outOfOrder.cafe.order("SV01", unordered, outOfOrder.employee,
+                START.plusHours(2), new Food[]{food}, new int[]{1});
+        outOfOrder.cafe.order("SV02", unordered, outOfOrder.employee,
+                START.plusHours(1), new Food[]{food}, new int[]{1});
+        fails(InvalidTimeException.class, () -> unordered.endSession(START.plusMinutes(90)));
+        equal(null, unordered.getTimeEnd());
+        equal(ComputerStatus.IN_USE, outOfOrder.computer.getComputerStatus());
+        unordered.endSession(START.plusHours(2));
+        equal(ComputerStatus.AVAILABLE, outOfOrder.computer.getComputerStatus());
     }
 }

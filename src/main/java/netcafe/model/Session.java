@@ -2,12 +2,16 @@ package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.enums.SessionStatus;
+import netcafe.exception.DuplicateIdException;
 import netcafe.exception.InvalidTimeException;
 import netcafe.exception.SessionStateException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class Session implements Identifiable, Chargeable {
   // Attribute
@@ -15,6 +19,7 @@ public final class Session implements Identifiable, Chargeable {
   private final CustomerAccount account;
   private final Computer computer;
   private final LocalDateTime timeStart;
+  private final List<FoodService> foodServices = new ArrayList<>();
   private LocalDateTime timeEnd;
   private SessionStatus sessionStatus;
 
@@ -25,6 +30,7 @@ public final class Session implements Identifiable, Chargeable {
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");
     sessionStatus=SessionStatus.ACTIVE;
+    computer.occupy(this);
   }
 
   public String getId() { return sessionId; }
@@ -34,9 +40,27 @@ public final class Session implements Identifiable, Chargeable {
   public LocalDateTime getTimeStart() { return timeStart; }
   public LocalDateTime getTimeEnd() { return timeEnd; }
   public SessionStatus getSessionStatus() { return sessionStatus; }
-  public void complete(LocalDateTime end) {
+  public List<FoodService> getFoodServices() { return Collections.unmodifiableList(foodServices); }
+
+  // FoodService records itself only after all of its lines have been validated.
+  void recordOrder(FoodService service) {
+    if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Order requires active session");
+    if (service.getSession() != this) throw new SessionStateException("Order belongs to another session");
+    if (service.getTimeStartService().isBefore(timeStart)) throw new InvalidTimeException("Order time precedes session start");
+    for (FoodService old : foodServices) {
+      if (old.getId().equals(service.getId())) throw new DuplicateIdException("Duplicate order ID: " + service.getId());
+    }
+    foodServices.add(service);
+  }
+
+  /** Ends at the supplied simulated time; direct calls enforce the same rules as the service. */
+  public void endSession(LocalDateTime end) {
     if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Session is already completed: " + sessionId);
     if (end == null || !end.isAfter(timeStart)) throw new InvalidTimeException("End must be after start: " + sessionId);
+    for (FoodService service : foodServices) {
+      if (service.getTimeStartService().isAfter(end)) throw new InvalidTimeException("Order occurs after proposed session end");
+    }
+    computer.release(this);
     timeEnd=end; sessionStatus=SessionStatus.COMPLETED;
   }
   public BigDecimal amountAt(LocalDateTime at) {

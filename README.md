@@ -125,7 +125,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã chạy Maven 3.9.9 `clean package` với JDK 21 và `-Dmaven.compiler.release=8`: build thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản và 40 kiểm tra kết thúc/thanh toán theo giờ thực tế, tổng cộng 179 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
+Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản và 78 kiểm tra kết thúc/thanh toán, tổng cộng 217 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra mới bao gồm kết thúc trực tiếp trên model, gọi món thất bại và bảo vệ trạng thái máy.
 
 ## Tài khoản khách hàng
 
@@ -153,10 +153,13 @@ Phạm vi hiện tại là lưu thông tin tài khoản và kiểm tra khi mở 
 
 Khi khách muốn nghỉ, gọi endSession với giờ nghỉ thực tế, rồi lập hóa đơn và thanh toán. timeEnd ban đầu là null; khi kết thúc, nó ghi giờ nghỉ thực tế và máy được giải phóng. Tiền máy được tính theo thời lượng thực tế; không đăng ký giờ kết thúc trước.
 
+Giờ bắt đầu và kết thúc có thể nhập để mô phỏng; không cần chờ thời gian trôi qua. `SessionService.endSession` kiểm tra phiên thuộc quán rồi gọi `Session.endSession`. Model tự kiểm tra phiên ACTIVE, giờ kết thúc sau giờ bắt đầu và không trước bất kỳ lần gọi món nào. Gọi trực tiếp trên model cũng thực hiện các kiểm tra này và cập nhật máy. Máy giữ phiên đang sử dụng nó; không thể đổi trạng thái thủ công khi đang có phiên hoặc gán `IN_USE` bằng setter.
+
 ```java
+LocalDateTime start = LocalDateTime.of(2026, 10, 5, 3, 0);
 Session session = cafe.openSession("S01", account, computer, start);
-// Trong ứng dụng, thời điểm khách yêu cầu kết thúc:
-LocalDateTime actualEnd = LocalDateTime.now();
+// Mô phỏng khách nghỉ lúc 4h30, không cần chờ 90 phút.
+LocalDateTime actualEnd = start.plusMinutes(90);
 cafe.endSession(session, actualEnd);
 Receipt receipt = cafe.issueReceipt("R01", session, employee);
 cafe.pay("P01", receipt, actualEnd, PaymentMethod.CASH, receipt.getTotalAmount());

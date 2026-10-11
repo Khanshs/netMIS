@@ -18,7 +18,7 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
 9. Chạy `EarlyEndDemo.main()` để xem khách nghỉ lúc 4h30 sau khi bắt đầu lúc 3h; chạy `EarlyEndChecks.main()` để kiểm tra kết thúc và thanh toán theo giờ thực tế.
-10. Chạy `SessionEndChecks.main()` để kiểm tra kết thúc phiên qua hai API, ghi nhận món và tính đủ tiền món trên hóa đơn.
+10. Chạy `SessionEndChecks.main()` để kiểm tra kết thúc qua service và trực tiếp trên phiên, liên kết đơn món và trạng thái sau thao tác thất bại.
 
 ## Cấu trúc
 
@@ -70,7 +70,7 @@ java -cp target/classes:target/test-classes netcafe.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.AccountChecks
 java -cp target/classes:target/test-classes netcafe.EarlyEndChecks
 java -cp target/classes:target/test-classes netcafe.SessionEndChecks
-java -cp target/classes netcafe.Demo.EarlyEndDemo
+java -cp target/classes netcafe.EarlyEndDemo
 ```
 
 Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.
@@ -128,11 +128,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 78 kiểm tra kết thúc/thanh toán và 135 kiểm tra riêng về phiên, tổng cộng 352 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra bao gồm kết thúc trực tiếp trên model, gọi món thất bại, bảo vệ trạng thái máy và món ghi trực tiếp vẫn được tính đủ trên hóa đơn.
-
-## Thay đổi Java được lấy từ netMIS-copy
-
-Tham khảo nhánh `codex/customer-accounts`, commit `ab38329` của `khanhtruongdz6085-droid/netMIS-copy`: `Session.recordFoodService(order)` kiểm tra, khóa và ghi nhận đơn; `FoodService.seal()` chỉ khóa nội dung. `FoodOrderService` lưu đơn vào phiên và danh sách chung của quán. `ReceiptService` tính tiền món từ danh sách của phiên để tính đủ cả đơn ghi trực tiếp. Giữ cơ chế `Computer.activeSession`, `occupy()` và `release()` bảo vệ máy của bản hiện tại. Bản C# được tách thành project riêng, không nằm trong mã nguồn Java này.
+Đã build bằng Maven 3.9.9 với JDK 21 và `-Dmaven.compiler.release=8` thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 40 kiểm tra kết thúc/thanh toán theo giờ thực tế và 130 kiểm tra kết thúc phiên qua cả hai API, tổng cộng 309 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
 
 ## Tài khoản khách hàng
 
@@ -160,13 +156,12 @@ Phạm vi hiện tại là lưu thông tin tài khoản và kiểm tra khi mở 
 
 Khi khách muốn nghỉ, gọi endSession với giờ nghỉ thực tế, rồi lập hóa đơn và thanh toán. timeEnd ban đầu là null; khi kết thúc, nó ghi giờ nghỉ thực tế và máy được giải phóng. Tiền máy được tính theo thời lượng thực tế; không đăng ký giờ kết thúc trước.
 
-Giờ bắt đầu và kết thúc có thể nhập để mô phỏng; không cần chờ thời gian trôi qua. `SessionService.endSession` kiểm tra phiên thuộc quán rồi gọi `Session.endSession`. Model tự kiểm tra phiên ACTIVE, giờ kết thúc sau giờ bắt đầu và không trước bất kỳ lần gọi món nào. Gọi trực tiếp trên model cũng thực hiện các kiểm tra này và cập nhật máy. Máy giữ phiên đang sử dụng nó; không thể đổi trạng thái thủ công khi đang có phiên hoặc gán `IN_USE` bằng setter.
+`Session` giữ danh sách các lần gọi món đã khóa; `getFoodServices()` chỉ cho đọc. `cafe.endSession(session, end)` kiểm tra phiên thuộc quán rồi gọi `session.endSession(end)`. Cả hai cách đều kiểm tra phiên ACTIVE, end sau start và không có đơn món sau end trước khi cập nhật phiên và máy. Ví dụ S04 bắt đầu 11:00, gọi món 11:15: kết thúc 11:01 bị từ chối và giữ nguyên trạng thái; kết thúc 12:00 thành công, máy AVAILABLE. Phương thức `complete()` đã được bỏ.
 
 ```java
-LocalDateTime start = LocalDateTime.of(2026, 10, 5, 3, 0);
 Session session = cafe.openSession("S01", account, computer, start);
-// Mô phỏng khách nghỉ lúc 4h30, không cần chờ 90 phút.
-LocalDateTime actualEnd = start.plusMinutes(90);
+// Trong ứng dụng, thời điểm khách yêu cầu kết thúc:
+LocalDateTime actualEnd = LocalDateTime.now();
 cafe.endSession(session, actualEnd);
 Receipt receipt = cafe.issueReceipt("R01", session, employee);
 cafe.pay("P01", receipt, actualEnd, PaymentMethod.CASH, receipt.getTotalAmount());

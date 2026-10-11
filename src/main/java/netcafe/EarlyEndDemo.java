@@ -1,4 +1,4 @@
-package netcafe.Demo;
+package netcafe;
 
 import netcafe.Service.NetCafe;
 import netcafe.enums.*;
@@ -38,7 +38,7 @@ public final class EarlyEndDemo {
         Session session = cafe.getSessions().get(0);
         Receipt receipt = cafe.getReceipts().get(0);
         System.out.println("Start=" + session.getTimeStart().toLocalTime()
-                            + " ActualEnd=" + session.getTimeEnd().toLocalTime());
+                + " ActualEnd=" + session.getTimeEnd().toLocalTime());
         System.out.println("Minutes=" + Duration.between(session.getTimeStart(), session.getTimeEnd()).toMinutes());
         System.out.println("Total=" + receipt.getTotalAmount());
         System.out.println("Collected=" + cafe.collectedAmount());

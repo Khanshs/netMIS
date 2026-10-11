@@ -118,6 +118,7 @@ NetCafeMIS/
         ├── NetCafeChecks.java
         ├── AccountChecks.java
         ├── EarlyEndChecks.java
+        ├── SessionEndChecks.java
         └── DiscountChecks.java
 ```
 
@@ -133,8 +134,8 @@ Các thư mục `.idea`, `target` hoặc `out` phục vụ IDE và biên dịch.
 | Interface | 3 |
 | Enum | 5 |
 | Main và ba demo | 4 |
-| Bốn chương trình kiểm tra | 4 |
-| **Tổng** | **53** |
+| Năm chương trình kiểm tra | 5 |
+| **Tổng** | **54** |
 
 Số lượng này tính theo file Java, không tính các lớp nội bộ hoặc đối tượng ẩn danh trong chương trình kiểm tra. Nhiều file không tự chứng minh thiết kế tốt; cần xem mỗi file có trách nhiệm đủ rõ và phù hợp với quy mô bài hay không.
 
@@ -217,7 +218,7 @@ Các thuộc tính được cố định sau khi khởi tạo. Cách này giữ 
 
 Biểu diễn một máy: `computerId`, `section`, `computerStatus`. Máy giữ tham chiếu tới ComputerSection để lấy đơn giá, thay vì sao chép giá vào từng máy.
 
-Khu của máy cố định. Máy giữ tham chiếu nội bộ tới phiên đang sử dụng. Session giữ máy khi khởi tạo và giải phóng khi kết thúc hợp lệ. `setComputerStatus()` chỉ cho đổi trạng thái của máy không có phiên; không cho gán `IN_USE` thủ công. Các phương thức giữ/giải phóng máy nằm trong package model.
+Khu của máy cố định. Trạng thái thay đổi khi mở/kết thúc phiên. `setComputerStatus()` đang là phương thức public; khi dùng trong ứng dụng cần để service điều phối nhằm giữ trạng thái máy và phiên nhất quán.
 
 ### 5.3. Customer
 
@@ -235,13 +236,14 @@ Biểu diễn một lần tài khoản sử dụng một máy. Dữ liệu gồm
 
 | Phương thức | Ý nghĩa |
 |---|---|
-| Constructor | Tạo phiên ACTIVE, thời gian kết thúc chưa có; giữ máy AVAILABLE và chuyển máy IN_USE |
-| `getFoodServices()` | Danh sách chỉ đọc của các lần gọi món đã ghi nhận |
-| `endSession(end)` | Kiểm tra phiên ACTIVE, end sau start và không trước lần gọi món nào; hoàn tất phiên và giải phóng máy |
+| Constructor | Tạo phiên ACTIVE, thời gian kết thúc chưa có |
+| `endSession(end)` | Kiểm tra ACTIVE, end sau start và không trước lần gọi món; hoàn tất phiên và giải phóng máy |
+| `recordFoodService(service)` | Kiểm tra đơn thuộc phiên ACTIVE, giờ gọi và mã; khóa đơn rồi liên kết với phiên |
+| `getFoodServices()` | Lấy danh sách các đơn đã ghi nhận của phiên, chỉ đọc |
 | `amountAt(at)` | Tạm tính tiền máy gốc đến thời điểm at; không chấp nhận at trước start |
 | `calculateAmount()` | Tính tiền máy gốc đến thời điểm kết thúc; yêu cầu phiên đã hoàn tất |
 
-Session tính tiền máy theo thời gian và giá khu, đồng thời tự bảo vệ quy tắc kết thúc và cập nhật trạng thái máy. SessionService kiểm tra đăng ký/lịch sử khi mở phiên và xác nhận phiên thuộc quán khi kết thúc. Gọi trực tiếp `Session.endSession()` vẫn kiểm tra đầy đủ thời gian và các lần gọi món của phiên.
+Session tính tiền máy theo thời gian và giá khu, giữ danh sách các lần gọi món đã khóa và tự kiểm tra khi kết thúc. Cả gọi trực tiếp `session.endSession(end)` lẫn qua SessionService đều kiểm tra thời gian, trạng thái và cập nhật máy cùng nhau. SessionService kiểm tra phiên thuộc quán; kiểm tra lịch sử tài khoản/máy nằm ở thao tác mở phiên. Phương thức `complete()` đã được bỏ.
 
 ### 5.6. Food
 
@@ -255,7 +257,7 @@ Một lần gọi món của một phiên, gồm mã, Session, Employee, thời 
 
 `addItem()` thêm món hoặc gộp số lượng nếu món đó đã có trong cùng lần gọi với cùng giá. Nếu hai giá khác nhau cho cùng món trong một lần gọi, chương trình báo lỗi. `getTotal()` tính tổng các dòng. `seal()` khóa đơn và yêu cầu đơn có ít nhất một dòng.
 
-FoodOrderService tạo đơn, thêm các dòng rồi gọi `Session.recordFoodService(order)` để kiểm tra, khóa và ghi nhận vào phiên trước khi lưu vào danh sách chung. `FoodService.seal()` chỉ khóa nội dung đơn. Đơn thất bại không được thêm vào phiên; ghi nhận lại cùng mã đơn bị từ chối. Khi đã khóa, không thể thêm món vào đơn đó qua `addItem()`.
+FoodOrderService tạo đơn, thêm các dòng và khóa đơn trước khi lưu. Khi đã khóa, không thể thêm món vào đơn đó qua `addItem()`.
 
 ### 5.8. FoodOrderDetail
 
@@ -413,13 +415,13 @@ Kiểm tra đối tượng không null và mã không trùng. Với máy, kiểm
 
 `openSession()` nhận CustomerAccount, kiểm tra mã, tham chiếu đã đăng ký, tài khoản ACTIVE, thời gian, máy AVAILABLE, tài khoản chưa có phiên ACTIVE và lịch sử trên máy/tài khoản. Sau khi kiểm tra, tạo Session, thêm vào danh sách và chuyển máy IN_USE.
 
-`SessionService.endSession()` xác nhận phiên thuộc quán rồi gọi `Session.endSession()`. Model kiểm tra phiên ACTIVE, end sau start và không có lần gọi món nào sau end; sau đó hoàn tất phiên và chuyển đúng máy của phiên về AVAILABLE. Giờ start/end được truyền vào để mô phỏng, không phải chờ đồng hồ thực tế.
+`endSession()` kiểm tra phiên đã đăng ký trong quán bằng ServiceChecks.registered, rồi gọi session.endSession(end). Session tự kiểm tra ACTIVE, end sau start và không có lần gọi món đã ghi nhận nào sau end. Nếu hợp lệ, phiên chuyển COMPLETED và máy AVAILABLE; nếu lỗi, thời gian và trạng thái giữ nguyên.
 
 Các phiên mới của cùng máy hoặc tài khoản được nhập theo lịch sử không lùi. Đây là một cách kiểm tra đơn giản, phù hợp dữ liệu nhỏ và thao tác tuần tự.
 
 ### 8.3. FoodOrderService
 
-`order()` kiểm tra phiên và nhân viên, thời gian gọi, món đã đăng ký, danh sách dòng món và số lượng. Nó tạo FoodService, thêm FoodOrderDetail, gọi `session.recordFoodService()` rồi lưu vào danh sách chung của quán.
+`order()` kiểm tra phiên và nhân viên, thời gian gọi, món đã đăng ký, danh sách dòng món và số lượng. Nó tạo FoodService, thêm đủ FoodOrderDetail rồi gọi session.recordFoodService(service). Phiên kiểm tra đơn, gọi seal() và liên kết đơn với danh sách riêng; FoodOrderService lưu cùng đối tượng vào danh sách toàn quán. Đơn không hợp lệ không được thêm vào hai danh sách.
 
 Có hai overload:
 
@@ -430,7 +432,7 @@ Ba mảng `Food[]`, `int[]`, `BigDecimal[]` cần cùng độ dài và cùng th�
 
 ### 8.4. ReceiptService
 
-Kiểm tra phiên đã COMPLETED, nhân viên ACTIVE và phiên chưa có hóa đơn. Cộng tổng từ `session.getFoodServices()` để tính đủ cả đơn được ghi trực tiếp vào phiên, lấy tiền máy gốc từ Session, lấy tỷ lệ qua IDiscount rồi tạo Receipt.
+Kiểm tra phiên đã COMPLETED, nhân viên ACTIVE và phiên chưa có hóa đơn. Cộng tổng các FoodService thuộc phiên, lấy tiền máy gốc từ Session, lấy tỷ lệ qua IDiscount rồi tạo Receipt.
 
 Đây là nơi tập hợp dữ liệu để lập hóa đơn. Các phép nhân tỷ lệ, làm tròn và chốt khoản giảm được thực hiện trong Receipt.
 
@@ -706,16 +708,16 @@ Minh họa khách bắt đầu 3h rồi yêu cầu kết thúc và thanh toán l
 
 ### 14.4. Các chương trình kiểm tra độc lập
 
-Bốn class kiểm tra độc lập bằng main, không dùng JUnit.
+Năm class kiểm tra độc lập bằng main, không dùng JUnit.
 
 | Chương trình | Nội dung chính | Số kiểm tra trong lần rà soát |
 |---|---|---:|
 | NetCafeChecks | Dữ liệu mẫu, trạng thái, mã, thời gian, gọi món, hóa đơn, thanh toán | 43 |
 | DiscountChecks | Ba lớp con, tỷ lệ, làm tròn, hóa đơn chốt, thanh toán sau giảm và tỷ lệ sai | 42 |
 | AccountChecks | Dữ liệu tài khoản, đăng ký, username, trạng thái và lịch sử phiên theo tài khoản | 54 |
-| EarlyEndChecks | Kết thúc qua service hoặc model, thời gian, thanh toán, lịch sử gọi món và bảo vệ máy | 78 |
-| SessionEndChecks | Kết thúc qua hai API, ghi nhận đơn, danh sách chỉ đọc và món ghi trực tiếp trên hóa đơn | 135 |
-| **Tổng** | | **352** |
+| EarlyEndChecks | Khách kết thúc phiên theo giờ thực tế, tính tiền và kiểm tra thời điểm thanh toán | 40 |
+| SessionEndChecks | Hai cách kết thúc, giờ gọi món, trạng thái sau thất bại, đơn khóa và danh sách chỉ đọc | 130 |
+| **Tổng** | | **309** |
 
 DiscountChecks có TestCustomer nội bộ để giả lập tỷ lệ không hợp lệ hoặc thay đổi, phục vụ kiểm tra; nó không phải một hạng khách thứ tư dùng trong ứng dụng.
 
@@ -759,7 +761,7 @@ pom.xml khai báo Java 8, encoding UTF-8 và main class netcafe.Main. Khi dùng 
 
 ### 15.4. Bằng chứng của lần rà soát này
 
-Bản Java được gộp cách ghi nhận món từ commit ab38329 của netMIS-copy và giữ cơ chế sở hữu máy của bản hiện tại. Biên dịch bằng JDK của IntelliJ với javac --release 8. Main khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, EarlyEndChecks báo 78 kiểm tra qua, SessionEndChecks báo 135 kiểm tra qua. Tổng cộng 352 kiểm tra đều qua.
+Đã build bằng Maven 3.9.9 trên JDK 21 với -Dmaven.compiler.release=8 thành công. JAR khớp EXPECTED_OUTPUT.txt, DiscountDemo, ExceptionDemo và EarlyEndDemo chạy đúng; NetCafeChecks báo 43 kiểm tra qua, DiscountChecks báo 42 kiểm tra qua, AccountChecks báo 54 kiểm tra qua, EarlyEndChecks báo 40 kiểm tra qua, SessionEndChecks báo 130 kiểm tra qua; tổng cộng 309 kiểm tra.
 
 Ví dụ Java hoàn chỉnh ở mục 13 cũng đã được trích từ tài liệu, biên dịch và chạy riêng; cả tổng hóa đơn và thực thu đều là 135600 như phần giải thích.
 
@@ -794,13 +796,23 @@ Dự án có một luồng nghiệp vụ đủ cụ thể để giải thích OO
 6. **Có kiểm tra lỗi:** kiểm tra cả trạng thái sau thất bại, mã trùng, thời gian, số lượng, thanh toán lặp, giá lịch sử và mức giảm.
 7. **Dễ chạy ở phạm vi bài học:** không cần framework, database hoặc thư viện ngoài để chạy nguồn bằng JDK.
 
-### 17.2. Bảo vệ thao tác kết thúc phiên
+### 17.2. Kiểm tra kết thúc phiên và giới hạn còn lại
 
-Session giữ danh sách gọi món đã ghi nhận và cung cấp `endSession(end)` có đầy đủ kiểm tra. Ví dụ S04 bắt đầu 11:00 và đã gọi món lúc 11:15: gọi trực tiếp `session.endSession(11:10)` sẽ bị từ chối bằng InvalidTimeException; phiên vẫn ACTIVE, timeEnd vẫn null và máy vẫn IN_USE. Trong Java, truyền giờ bằng LocalDateTime tương ứng.
+Đường gọi trực tiếp kết thúc phiên đã được sửa. Session giữ các FoodService đã ghi nhận, và cả hai API đều dùng Session.endSession để kiểm tra rồi cập nhật phiên/máy.
 
-Khi truyền giờ hợp lệ, phiên chuyển COMPLETED và máy trở về AVAILABLE. Kết thúc lặp bị từ chối và không ảnh hưởng phiên mới trên cùng máy. Computer giữ phiên đang sử dụng, nên setter không thể đổi trạng thái khi máy có phiên hoặc gán IN_USE thủ công; một phiên mới cũng không thể chiếm máy đang bận.
+Ví dụ dữ liệu mẫu: S04 đang chạy từ 11:00 và có lần gọi món lúc 11:15. Gọi trực tiếp:
 
-Trong ứng dụng, dùng `cafe.openSession()` và `cafe.endSession()` để có thêm kiểm tra đối tượng đã đăng ký và lịch sử của toàn quán. Các thao tác nghiệp vụ vẫn thực hiện tuần tự.
+```java
+NetCafe cafe = Main.sample();
+Session session = cafe.getSessions().get(3);
+session.endSession(LocalDateTime.of(2026, 10, 5, 11, 1));
+```
+
+Thao tác ném InvalidTimeException vì giờ kết thúc trước lần gọi món. Sau thất bại, timeEnd vẫn null, phiên ACTIVE và máy IN_USE. Gọi cafe.endSession với cùng thời điểm cũng bị từ chối. Kết thúc hợp lệ lúc 12:00 qua cách nào cũng chuyển phiên COMPLETED và máy AVAILABLE; kết thúc lần nữa bị từ chối. SessionEndChecks kiểm tra những hành vi này cùng luồng lập hóa đơn, thanh toán và mở phiên kế tiếp. Phương thức complete() đã được bỏ.
+
+Giới hạn còn lại: Computer vẫn có setter trạng thái công khai. Gọi setComputerStatus(AVAILABLE) trực tiếp trên máy đang có phiên ACTIVE vẫn có thể tạo dữ liệu không nhất quán. Bản sửa kết thúc phiên chưa thay đổi API đó. Getter danh sách chỉ đọc không ngăn được việc thay đổi đối tượng bên trong bằng setter công khai.
+
+Nếu mở rộng dự án, nên thu hẹp quyền thay đổi trạng thái máy và giữ thao tác mở/kết thúc phiên làm đầu mối cập nhật. Các service hiện nằm ở package khác model, nên cần tổ chức quyền truy cập phù hợp thay vì đổi package-private tùy tiện.
 
 ### 17.3. Tầng Service hơi lớn so với quy mô bài
 
@@ -825,9 +837,9 @@ Nếu cần mở rộng, có thể dùng một đối tượng dòng yêu cầu 
 
 ### 17.5. Kiểm tra đang cần chạy thủ công
 
-Hai main kiểm tra có giá trị, đã phát hiện và xác nhận nhiều quy tắc. Tuy nhiên người dùng có thể chạy Maven package mà chưa chạy chúng. Bước học tiếp theo hợp lý là đưa các kiểm tra quan trọng sang JUnit để build tự động chạy và báo lỗi rõ.
+Năm main kiểm tra có giá trị, đã phát hiện và xác nhận nhiều quy tắc. Tuy nhiên người dùng có thể chạy Maven package mà chưa chạy chúng. Bước học tiếp theo hợp lý là đưa các kiểm tra quan trọng sang JUnit để build tự động chạy và báo lỗi rõ.
 
-85 kiểm tra hiện tại chưa chứng minh tất cả đường sử dụng của API đều an toàn. Ví dụ sửa trạng thái trực tiếp ở mục 17.2 vẫn tạo được dữ liệu không nhất quán.
+309 kiểm tra hiện tại xác nhận các tình huống được kiểm tra, không chứng minh tất cả đường sử dụng của API đều an toàn. Setter trạng thái máy công khai vẫn có thể tạo dữ liệu không nhất quán như mục 17.2.
 
 ### 17.6. Một số giới hạn khác
 
@@ -840,7 +852,7 @@ Hai main kiểm tra có giá trị, đã phát hiện và xác nhận nhiều qu
 
 ### 17.7. Số class có quá nhiều không?
 
-53 file Java gồm 14 exception ngắn, 5 enum, 3 interface và 8 file Main/demo/kiểm tra. Không nên đánh đồng số file với số nghiệp vụ phức tạp.
+54 file Java gồm 14 exception ngắn, 5 enum, 3 interface và 9 file Main/demo/kiểm tra. Không nên đánh đồng số file với số nghiệp vụ phức tạp.
 
 Nhóm model theo ERD và ba lớp con khách có lý do rõ ràng. Nhóm dễ giảm nhất là lớp điều phối và các lớp chuyển tiếp. Mình sẽ ưu tiên **hiểu luồng, bảo vệ trạng thái và giảm việc phải nhảy file**, thay vì cố thêm mẫu thiết kế để tăng số class.
 
@@ -891,7 +903,7 @@ PriceAtOrder giữ giá lúc gọi, Receipt giữ tiền đã chốt. Chỉnh Fo
 
 ### Private fields đã đủ đóng gói chưa?
 
-Chưa đủ. Phương thức public cũng phải duy trì các ràng buộc liên quan. Session.endSession tự kiểm tra thời gian/các lần gọi món và cập nhật máy; Computer bảo vệ trạng thái khi đang có phiên. Getter danh sách chỉ đọc giúp bên ngoài không sửa lịch sử gọi món để bỏ qua kiểm tra.
+Chưa đủ. Cần xem phương thức public có duy trì các ràng buộc liên quan hay không. Ví dụ hoàn tất Session trực tiếp có thể bỏ qua việc kiểm tra món và cập nhật máy. Đây là hạn chế hiện tại đã được nhận diện.
 
 ### Tại sao dữ liệu dùng List?
 

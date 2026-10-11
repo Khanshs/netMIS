@@ -1,9 +1,9 @@
-package netcafe.Demo;
-import netcafe.Main;
+package netcafe;
 import netcafe.Service.NetCafe;
 
 import netcafe.enums.PaymentMethod;
 import netcafe.exception.*;
+import netcafe.model.*;
 import netcafe.model.customer.NormalCustomer;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

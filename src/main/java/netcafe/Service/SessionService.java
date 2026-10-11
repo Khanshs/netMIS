@@ -3,7 +3,9 @@ package netcafe.Service;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.*;
 import static netcafe.Service.ServiceChecks.*;
 
 public final class SessionService {
@@ -35,6 +37,7 @@ public final class SessionService {
         }
         Session session = new Session(id, account, computer, start);
         data.sessions.add(session);
+        computer.setComputerStatus(ComputerStatus.IN_USE);
         return session;
     }
 

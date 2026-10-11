@@ -1,6 +1,7 @@
 package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
+import netcafe.enums.ComputerStatus;
 import netcafe.enums.SessionStatus;
 import netcafe.exception.DuplicateIdException;
 import netcafe.exception.InvalidOrderException;
@@ -31,7 +32,6 @@ public final class Session implements Identifiable, Chargeable {
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");
     sessionStatus=SessionStatus.ACTIVE;
-    computer.occupy(this);
   }
 
   public String getId() { return sessionId; }
@@ -46,7 +46,7 @@ public final class Session implements Identifiable, Chargeable {
   /** Validate and lock an order before linking it to this session. */
   public void recordFoodService(FoodService service) {
     Checks.required(service, "foodService");
-    if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Order requires active session");
+    if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Order requires active session: " + sessionId);
     if (service.getSession() != this) throw new InvalidOrderException("Order belongs to another session");
     if (service.getTimeStartService().isBefore(timeStart)) throw new InvalidTimeException("Order time precedes session start");
     for (FoodService old : foodServices) {
@@ -56,15 +56,15 @@ public final class Session implements Identifiable, Chargeable {
     foodServices.add(service);
   }
 
-  /** Ends at the supplied simulated time; direct calls enforce the same rules as the service. */
+  /** Both direct callers and SessionService use these completion rules. */
   public void endSession(LocalDateTime end) {
     if (sessionStatus != SessionStatus.ACTIVE) throw new SessionStateException("Session is already completed: " + sessionId);
     if (end == null || !end.isAfter(timeStart)) throw new InvalidTimeException("End must be after start: " + sessionId);
     for (FoodService service : foodServices) {
       if (service.getTimeStartService().isAfter(end)) throw new InvalidTimeException("Order occurs after proposed session end");
     }
-    computer.release(this);
     timeEnd=end; sessionStatus=SessionStatus.COMPLETED;
+    computer.setComputerStatus(ComputerStatus.AVAILABLE);
   }
   public BigDecimal amountAt(LocalDateTime at) {
     if (at == null || at.isBefore(timeStart)) throw new InvalidTimeException("Time before session start or missing: " + sessionId);

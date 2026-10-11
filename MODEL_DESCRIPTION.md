@@ -14,7 +14,7 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 - `timeStart`: thời điểm bắt đầu phiên.
 - `timeEnd`: thời điểm khách nghỉ thực tế (null nếu phiên chưa hoàn tất); dùng để tính tiền và kiểm tra thanh toán.
 - `sessionStatus`: trạng thái phiên, ví dụ `ACTIVE` hoặc `COMPLETED`.
-- `foodServices`: danh sách các lần gọi món đã ghi nhận của phiên; getter chỉ cho đọc.
+- `foodServices`: danh sách các lần gọi món đã ghi nhận của chính phiên; bên ngoài chỉ được đọc.
 
 ### Constructor
 ```java
@@ -24,7 +24,6 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Kiểm tra `id` không rỗng bằng `Checks.id(id)`.
 - Kiểm tra `account`, `computer`, `start` không null bằng `Checks.required(...)`.
 - Mặc định trạng thái khởi tạo là `SessionStatus.ACTIVE`.
-- Yêu cầu máy đang `AVAILABLE`, giữ máy cho phiên này và chuyển máy sang `IN_USE`. Trong ứng dụng, tạo phiên qua `cafe.openSession(...)` để service kiểm tra thêm tài khoản đã đăng ký và lịch sử.
 
 ### Phương thức chính
 - `getId()`, `getSessionId()`: trả về mã phiên.
@@ -32,20 +31,20 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `getComputer()`: lấy máy tính.
 - `getTimeStart()`, `getTimeEnd()`: lấy thời điểm bắt đầu/kết thúc.
 - `getSessionStatus()`: lấy trạng thái phiên.
-- `getFoodServices()`: lấy danh sách chỉ đọc của các lần gọi món đã được khóa và ghi nhận.
+
+#### `recordFoodService(FoodService service)`
+- Kiểm tra đơn không null, phiên đang `ACTIVE`, đơn thuộc đúng phiên, giờ gọi không trước giờ bắt đầu và mã đơn chưa trùng trong phiên.
+- Gọi `service.seal()` để yêu cầu ít nhất một món và khóa đơn, rồi mới thêm vào danh sách của phiên.
+- `FoodOrderService` gọi phương thức này sau khi kiểm tra và tạo đủ các dòng món; cùng đối tượng đơn được lưu vào danh sách toàn quán.
+- `getFoodServices()` trả về danh sách chỉ đọc, không cho thêm hoặc xóa trực tiếp.
 
 #### `endSession(LocalDateTime end)`
 - Chỉ cho phép kết thúc phiên nếu trạng thái hiện tại là `ACTIVE`.
 - Kiểm tra thời điểm kết thúc phải khác null và phải sau thời điểm bắt đầu.
-- Kiểm tra thời điểm kết thúc không trước bất kỳ lần gọi món đã ghi nhận nào.
-- Nếu hợp lệ thì giải phóng đúng máy của phiên, đặt `timeEnd`, đổi phiên thành `COMPLETED` và máy thành `AVAILABLE`.
-- Nếu kiểm tra thất bại, giờ kết thúc và trạng thái phiên/máy giữ nguyên. Gọi trực tiếp phương thức này cũng được kiểm tra đầy đủ.
+- Kiểm tra không có lần gọi món đã ghi nhận nào xảy ra sau thời điểm kết thúc.
+- Nếu hợp lệ thì đặt `timeEnd`, đổi trạng thái thành `COMPLETED` và chuyển máy thành `AVAILABLE`.
 - Nếu không hợp lệ sẽ ném ra ngoại lệ tương ứng (`SessionStateException`, `InvalidTimeException`).
-
-#### `recordFoodService(FoodService service)`
-- Ghi nhận một lần gọi món vào phiên: kiểm tra đơn không null, phiên ACTIVE, đúng phiên, giờ gọi không trước giờ bắt đầu và mã đơn không trùng trong phiên.
-- Khóa đơn bằng `seal()` rồi thêm vào danh sách chỉ đọc của phiên. Nếu thất bại, danh sách giữ nguyên.
-- `FoodOrderService.order()` gọi phương thức này rồi lưu đơn vào danh sách chung của quán. Gọi trực tiếp trên phiên không thêm vào danh sách chung; hóa đơn vẫn tính đủ từ `session.getFoodServices()`.
+- Mọi kiểm tra diễn ra trước khi đổi trạng thái. Gọi trực tiếp trên phiên hoặc qua `SessionService` đều dùng các quy tắc này; `complete()` đã được bỏ.
 
 #### `amountAt(LocalDateTime at)`
 - Tính số tiền phát sinh đến thời điểm `at`.
@@ -63,7 +62,6 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Không thể tính tiền khi phiên đang hoạt động mà chưa có thời điểm kết thúc.
 - Tổng tiền phụ thuộc vào thời gian thực sự sử dụng và giá theo giờ của khu vực máy.
 - Khi khách muốn nghỉ, gọi SessionService.endSession(session, giờ nghỉ thực tế), sau đó lập hóa đơn và thanh toán. Ví dụ bắt đầu 3h, nghỉ 4h30: tính tiền cho 90 phút, được thanh toán lúc 4h30. Không đăng ký giờ kết thúc trước.
-- Giờ bắt đầu và kết thúc có thể do người dùng nhập để mô phỏng; không cần chờ đồng hồ thực tế. Service xác nhận phiên thuộc quán rồi gọi `session.endSession(end)`.
 
 ---
 
@@ -78,7 +76,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `employee`: nhân viên xử lý đơn hàng.
 - `timeStartService`: thời điểm bắt đầu phục vụ đơn.
 - `details`: danh sách các dòng đơn hàng (`FoodOrderDetail`).
-- `sealed`: cờ báo hiệu đơn hàng đã được khóa và không thể chỉnh sửa nữa; thao tác ghi nhận vào phiên thuộc `Session.recordFoodService()`.
+- `sealed`: cờ báo hiệu đơn hàng đã được ghi nhận và không thể chỉnh sửa nữa.
 
 ### Constructor
 ```java
@@ -110,8 +108,6 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 #### `seal()`
 - Khóa đơn hàng để không thể chỉnh sửa.
 - Nếu đơn hàng chưa có dòng nào thì ném ngoại lệ `InvalidOrderException`.
-- Chỉ khóa nội dung đơn; không tự ghi nhận vào phiên. Dùng `session.recordFoodService(order)` để ghi nhận.
-- Gọi lại trên đơn đã khóa không thay đổi nội dung. Ghi nhận lại cùng mã đơn qua phiên bị từ chối.
 
 #### `calculateAmount()`
 - Duyệt qua tất cả `FoodOrderDetail` trong `details`.
@@ -131,6 +127,7 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 - `FoodService` đại diện cho dịch vụ đồ ăn trong thời gian đó.
 - Một `Session` có thể có nhiều `FoodService` liên quan (nếu khách hàng đặt đồ ăn trong quá trình sử dụng máy).
 - `FoodService` giữ tham chiếu tới `Session`, cho thấy đơn hàng này được tạo trong phiên nào.
+- `Session` giữ danh sách các đơn đã khóa để tự kiểm tra giờ kết thúc, kể cả khi gọi trực tiếp `session.endSession(end)`.
 
 ## Kết luận
 `Session` tập trung vào việc quản lý thời gian và phí sử dụng máy tính. `FoodService` tập trung vào việc quản lý danh sách món ăn, tính toán tổng tiền mua hàng và bảo vệ dữ liệu đơn hàng khỏi việc sửa đổi sau khi xác nhận. Cả hai model cùng đóng vai trò then chốt trong xử lý nghiệp vụ của hệ thống quán net.

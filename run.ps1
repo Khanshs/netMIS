@@ -30,11 +30,11 @@ $sources = @(Get-ChildItem (Join-Path $PSScriptRoot 'src') -Recurse -Filter '*.j
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 $mainClass = 'netcafe.Main'
 if ($Checks) { $mainClass = 'netcafe.NetCafeChecks' }
-if ($ExceptionDemo) { $mainClass = 'netcafe.Demo.ExceptionDemo' }
-if ($DiscountDemo) { $mainClass = 'netcafe.Demo.DiscountDemo' }
+if ($ExceptionDemo) { $mainClass = 'netcafe.ExceptionDemo' }
+if ($DiscountDemo) { $mainClass = 'netcafe.DiscountDemo' }
 if ($DiscountChecks) { $mainClass = 'netcafe.DiscountChecks' }
 if ($AccountChecks) { $mainClass = 'netcafe.AccountChecks' }
-if ($EarlyEndDemo) { $mainClass = 'netcafe.Demo.EarlyEndDemo' }
+if ($EarlyEndDemo) { $mainClass = 'netcafe.EarlyEndDemo' }
 if ($EarlyEndChecks) { $mainClass = 'netcafe.EarlyEndChecks' }
 if ($SessionEndChecks) { $mainClass = 'netcafe.SessionEndChecks' }
 & $runnerPath -cp $outputPath $mainClass

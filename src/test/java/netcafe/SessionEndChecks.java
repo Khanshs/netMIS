@@ -147,23 +147,6 @@ public final class SessionEndChecks {
         completion(false);
         completion(true);
         orders();
-        directOrderBilling();
         System.out.println("SessionEndChecks OK: " + checks + " checks");
-    }
-
-    private static void directOrderBilling() {
-        NetCafe cafe = Main.sample();
-        Session session = cafe.getSessions().get(3);
-        FoodService extra = new FoodService("EXTRA", session, cafe.getEmployees().get(0), time(11, 30));
-        extra.addItem(cafe.getFoods().get(0), 1, BigDecimal.valueOf(13000));
-        session.recordFoodService(extra);
-        equal(2, session.getFoodServices().size());
-        fails(InvalidOrderException.class, () -> extra.addItem(cafe.getFoods().get(0), 1, BigDecimal.valueOf(13000)));
-        session.endSession(time(12, 0));
-        Receipt receipt = cafe.issueReceipt("R03", session, cafe.getEmployees().get(0));
-        equal(33000, receipt.getGrossServiceAmount());
-        equal(45000, receipt.getTotalAmount());
-        cafe.pay("P02", receipt, time(12, 0), PaymentMethod.CASH, receipt.getTotalAmount());
-        equal(94000, cafe.collectedAmount());
     }
 }

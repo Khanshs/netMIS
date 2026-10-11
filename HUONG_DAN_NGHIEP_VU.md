@@ -5,18 +5,14 @@
 1. Đăng ký khu, khách, nhân viên và món bằng addSection/addCustomer/addEmployee/addFood.
 2. Thêm máy tham chiếu đúng khu đã đăng ký, trạng thái AVAILABLE hoặc MAINTENANCE.
 3. Đăng ký CustomerAccount bằng addAccount: chủ tài khoản đã tồn tại, mã và username không trùng (username không phân biệt hoa/thường). openSession nhận tài khoản đã đăng ký, kiểm tra ACTIVE, máy trống, tài khoản chưa có phiên ACTIVE và lịch sử thời gian theo tài khoản/máy. Máy chuyển IN_USE.
-4. order: chỉ phiên ACTIVE và nhân viên ACTIVE; các món lấy giá hiện tại hoặc giá lịch sử truyền vào. Cùng món trong một lần gọi gộp số lượng nếu cùng giá. Đơn được khóa sau khi ghi nhận.
-5. endSession: thời gian kết thúc phải sau bắt đầu và không trước bất kỳ lần gọi món nào; máy trở về AVAILABLE.
+4. order: chỉ phiên ACTIVE và nhân viên ACTIVE; các món lấy giá hiện tại hoặc giá lịch sử truyền vào. Cùng món trong một lần gọi gộp số lượng nếu cùng giá. Khi đã tạo đủ dòng món hợp lệ, gọi session.recordFoodService để khóa và liên kết đơn với phiên, rồi lưu cùng đối tượng vào danh sách toàn quán.
+5. endSession: SessionService kiểm tra phiên thuộc quán, rồi gọi session.endSession. Phiên tự kiểm tra ACTIVE, thời gian kết thúc sau bắt đầu và không trước bất kỳ lần gọi món đã ghi nhận nào; hợp lệ thì chuyển COMPLETED và máy AVAILABLE. Gọi trực tiếp session.endSession cũng chạy các kiểm tra này. Thất bại không đổi giờ kết thúc hoặc trạng thái phiên/máy; complete() đã được bỏ.
 6. issueReceipt: phiên COMPLETED, tối đa một hóa đơn. Tính tiền gốc, lấy hai tỷ lệ từ IDiscount của khách qua session.getAccount().getCustomer() và chốt tiền giảm cùng tiền phải trả vào hóa đơn.
 7. pay: tổng tiền phải bằng hóa đơn; thời gian không trước kết thúc; tối đa một giao dịch thành công cho hóa đơn.
 
 Khách muốn nghỉ lúc nào thì gọi endSession(session, giờ nghỉ thực tế) lúc đó, rồi issueReceipt và pay. timeEnd ban đầu là null, chỉ được ghi khi kết thúc phiên. Ví dụ bắt đầu 3h, nghỉ 4h30: tiền máy tính 90 phút; được thanh toán lúc 4h30 hoặc sau đó. isBefore trong Payment ngăn thanh toán trước giờ nghỉ đã ghi. Không cần lưu giờ kết thúc dự kiến hoặc gọi endSession trước khi khách nghỉ.
 
-Thời gian có thể do người dùng nhập để mô phỏng, không cần chờ thời gian thực. SessionService xác nhận phiên thuộc quán rồi gọi Session.endSession(end). Session giữ danh sách các lần gọi món đã ghi nhận để tự kiểm tra giờ kết thúc, kể cả khi được gọi trực tiếp. Chỉ khi mọi điều kiện hợp lệ mới giải phóng máy và cập nhật phiên; thao tác sai giữ nguyên trạng thái. Khi một phiên đã giữ máy, không thể đổi trạng thái máy thủ công hoặc tạo phiên khác trên máy đó.
-
 Các bước trên được tách vào package `netcafe.Service`: `CatalogService` đăng ký dữ liệu, `SessionService` quản lý phiên, `FoodOrderService` xử lý gọi món, `ReceiptService` lập hóa đơn và `PaymentService` ghi nhận thanh toán. `NetCafe` khởi tạo các service với cùng dữ liệu và cung cấp getter tương ứng. Không xóa các danh sách qua getter; không cung cấp nghiệp vụ xóa làm mất tham chiếu lịch sử. Các thao tác chạy tuần tự.
-
-Ghi nhận món bằng `FoodOrderService.order()` trong ứng dụng. Service tạo đơn rồi gọi `session.recordFoodService(order)` để kiểm tra, khóa và thêm vào phiên; `FoodService.seal()` chỉ khóa nội dung. Hóa đơn lấy tiền món từ `session.getFoodServices()` nên vẫn tính đủ đơn được ghi trực tiếp vào phiên. Các kiểm tra đăng ký món/nhân viên và mã đơn toàn quán thuộc FoodOrderService; gọi trực tiếp trên model chỉ bảo vệ quy tắc của phiên.
 
 ## Tính tiền
 

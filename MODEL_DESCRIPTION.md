@@ -1,6 +1,6 @@
 # Mô tả 2 model chính: Session và FoodService
 
-Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý quán net: `Session` và `FoodService`. Cả hai đều nằm trong package `netcafe.model` và đều triển khai interface `Identifiable` và `Chargeable`.
+Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý quán net: `Session` trong package `netcafe.model.NET` và `FoodService` trong `netcafe.model`. Cả hai đều triển khai interface `Identifiable` và `Chargeable`.
 
 ## 1. Session
 
@@ -34,6 +34,12 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `getSessionStatus()`: lấy trạng thái phiên.
 - `getFoodServices()`: lấy danh sách chỉ đọc của các lần gọi món đã được khóa và ghi nhận.
 
+#### `recordFoodService(FoodService service)`
+- Kiểm tra đơn không null, phiên ACTIVE, đơn thuộc đúng phiên, giờ gọi không trước giờ bắt đầu và mã đơn chưa trùng trong phiên.
+- Khóa đơn bằng `service.seal()` rồi mới thêm vào danh sách của phiên; đơn thất bại không được liên kết.
+- FoodOrderService gọi phương thức này sau khi tạo đủ các dòng món và lưu cùng đối tượng vào danh sách toàn quán.
+- ReceiptService tính tiền món từ danh sách của phiên, nên cả đơn ghi qua API model cũng được tính đầy đủ.
+
 #### `endSession(LocalDateTime end)`
 - Chỉ cho phép kết thúc phiên nếu trạng thái hiện tại là `ACTIVE`.
 - Kiểm tra thời điểm kết thúc phải khác null và phải sau thời điểm bắt đầu.
@@ -41,6 +47,7 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - Nếu hợp lệ thì giải phóng đúng máy của phiên, đặt `timeEnd`, đổi phiên thành `COMPLETED` và máy thành `AVAILABLE`.
 - Nếu kiểm tra thất bại, giờ kết thúc và trạng thái phiên/máy giữ nguyên. Gọi trực tiếp phương thức này cũng được kiểm tra đầy đủ.
 - Nếu không hợp lệ sẽ ném ra ngoại lệ tương ứng (`SessionStateException`, `InvalidTimeException`).
+- Mọi kiểm tra diễn ra trước khi đổi trạng thái. Gọi trực tiếp trên phiên hoặc qua `SessionService` đều dùng các quy tắc này; `complete()` đã được bỏ.
 
 #### `amountAt(LocalDateTime at)`
 - Tính số tiền phát sinh đến thời điểm `at`.
@@ -105,8 +112,8 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 #### `seal()`
 - Khóa đơn hàng để không thể chỉnh sửa.
 - Nếu đơn hàng chưa có dòng nào thì ném ngoại lệ `InvalidOrderException`.
-- Trước khi khóa, ghi nhận đơn vào danh sách nội bộ của Session. Phiên phải còn ACTIVE và giờ gọi không trước giờ bắt đầu; đơn thất bại không được thêm vào danh sách.
-- Gọi lại trên đơn đã khóa không ghi nhận thêm lần nữa.
+- Phương thức này chỉ khóa các dòng món; việc kiểm tra và liên kết đơn với phiên do `Session.recordFoodService()` thực hiện.
+- Gọi lại trên đơn đã khóa không thay đổi đơn.
 
 #### `calculateAmount()`
 - Duyệt qua tất cả `FoodOrderDetail` trong `details`.
@@ -126,6 +133,7 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 - `FoodService` đại diện cho dịch vụ đồ ăn trong thời gian đó.
 - Một `Session` có thể có nhiều `FoodService` liên quan (nếu khách hàng đặt đồ ăn trong quá trình sử dụng máy).
 - `FoodService` giữ tham chiếu tới `Session`, cho thấy đơn hàng này được tạo trong phiên nào.
+- `Session` giữ danh sách các đơn đã khóa để tự kiểm tra giờ kết thúc, kể cả khi gọi trực tiếp `session.endSession(end)`.
 
 ## Kết luận
 `Session` tập trung vào việc quản lý thời gian và phí sử dụng máy tính. `FoodService` tập trung vào việc quản lý danh sách món ăn, tính toán tổng tiền mua hàng và bảo vệ dữ liệu đơn hàng khỏi việc sửa đổi sau khi xác nhận. Cả hai model cùng đóng vai trò then chốt trong xử lý nghiệp vụ của hệ thống quán net.

@@ -181,7 +181,7 @@ public final class EarlyEndChecks {
 
         FoodService lateOrder = new FoodService("SV-LATE", session, direct.employee, orderTime.plusMinutes(1));
         lateOrder.addItem(food, 1, food.getPrice());
-        fails(SessionStateException.class, lateOrder::seal);
+        fails(SessionStateException.class, () -> session.recordFoodService(lateOrder));
         equal(1, session.getFoodServices().size());
         fails(SessionStateException.class, () -> session.endSession(orderTime.plusHours(1)));
 

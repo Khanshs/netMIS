@@ -5,8 +5,8 @@
 1. Đăng ký khu, khách, nhân viên và món bằng addSection/addCustomer/addEmployee/addFood.
 2. Thêm máy tham chiếu đúng khu đã đăng ký, trạng thái AVAILABLE hoặc MAINTENANCE.
 3. Đăng ký CustomerAccount bằng addAccount: chủ tài khoản đã tồn tại, mã và username không trùng (username không phân biệt hoa/thường). openSession nhận tài khoản đã đăng ký, kiểm tra ACTIVE, máy trống, tài khoản chưa có phiên ACTIVE và lịch sử thời gian theo tài khoản/máy. Máy chuyển IN_USE.
-4. order: chỉ phiên ACTIVE và nhân viên ACTIVE; các món lấy giá hiện tại hoặc giá lịch sử truyền vào. Cùng món trong một lần gọi gộp số lượng nếu cùng giá. Đơn được khóa sau khi ghi nhận.
-5. endSession: thời gian kết thúc phải sau bắt đầu và không trước bất kỳ lần gọi món nào; máy trở về AVAILABLE.
+4. order: chỉ phiên ACTIVE và nhân viên ACTIVE; các món lấy giá hiện tại hoặc giá lịch sử truyền vào. Cùng món trong một lần gọi gộp số lượng nếu cùng giá. Khi đã tạo đủ dòng món hợp lệ, gọi session.recordFoodService để khóa và liên kết đơn với phiên, rồi lưu cùng đối tượng vào danh sách toàn quán.
+5. endSession: SessionService kiểm tra phiên thuộc quán, rồi gọi session.endSession. Phiên tự kiểm tra ACTIVE, thời gian kết thúc sau bắt đầu và không trước bất kỳ lần gọi món đã ghi nhận nào; hợp lệ thì chuyển COMPLETED và máy AVAILABLE. Gọi trực tiếp session.endSession cũng chạy các kiểm tra này. Thất bại không đổi giờ kết thúc hoặc trạng thái phiên/máy; complete() đã được bỏ.
 6. issueReceipt: phiên COMPLETED, tối đa một hóa đơn. Tính tiền gốc, lấy hai tỷ lệ từ IDiscount của khách qua session.getAccount().getCustomer() và chốt tiền giảm cùng tiền phải trả vào hóa đơn.
 7. pay: tổng tiền phải bằng hóa đơn; thời gian không trước kết thúc; tối đa một giao dịch thành công cho hóa đơn.
 

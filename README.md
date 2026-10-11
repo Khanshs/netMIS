@@ -13,11 +13,12 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 2. Trong IntelliJ IDEA, chọn **File → Open**, chọn thư mục `netMIS` vừa clone (hoặc file `pom.xml` trong thư mục đó), rồi mở như một Maven project.
 3. Chọn Project SDK là JDK 8 hoặc mới hơn và dùng encoding UTF-8. Chờ IntelliJ import Maven xong.
 4. Chạy `src/main/java/netcafe/Main.java` để xem dữ liệu mẫu.
-5. Chạy `src/main/java/netcafe/ExceptionDemo.java` để xem xử lý exception.
+5. Chạy `src/main/java/netcafe/Demo/ExceptionDemo.java` để xem xử lý exception.
 6. Chạy `src/test/java/netcafe/NetCafeChecks.java` để kiểm tra nghiệp vụ. Đây là chương trình main độc lập, Maven Surefire không tự chạy nó.
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
 9. Chạy `EarlyEndDemo.main()` để xem khách nghỉ lúc 4h30 sau khi bắt đầu lúc 3h; chạy `EarlyEndChecks.main()` để kiểm tra kết thúc và thanh toán theo giờ thực tế.
+10. Chạy `SessionEndChecks.main()` để kiểm tra kết thúc qua service và trực tiếp trên phiên, liên kết đơn món và trạng thái sau thao tác thất bại.
 
 ## Cấu trúc
 
@@ -32,18 +33,17 @@ NetCafeMIS/
 └── src/
     ├── main/java/netcafe/
     │   ├── Main.java
-    │   ├── ExceptionDemo.java
-    │   ├── DiscountDemo.java
-    │   ├── EarlyEndDemo.java
+    │   ├── Demo/       # ExceptionDemo, DiscountDemo, EarlyEndDemo
     │   ├── Identifiable.java
     │   ├── Chargeable.java
     │   ├── IDiscount.java
-    │   ├── model/      # 11 lớp thực thể, gồm CustomerAccount, Customer trừu tượng, Checks nội bộ
+    │   ├── model/      # Customer, CustomerAccount, FoodService, hóa đơn và Checks dùng chung
+    │   │   ├── NET/    # Computer, ComputerSection, Employee, Food, Session
     │   │   └── customer/ # NormalCustomer, MemberCustomer, VipCustomer
     │   ├── enums/      # 5 enum, gồm AccountStatus
     │   ├── Service/    # Các lớp điều phối nghiệp vụ
     │   └── exception/  # 14 loại lỗi nghiệp vụ và EXCEPTIONS.md
-    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks
+    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks, SessionEndChecks
 ```
 
 Package `netcafe.Service` gom các service theo chức năng:
@@ -68,10 +68,11 @@ java -cp target/classes:target/test-classes netcafe.NetCafeChecks
 java -cp target/classes:target/test-classes netcafe.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.AccountChecks
 java -cp target/classes:target/test-classes netcafe.EarlyEndChecks
+java -cp target/classes:target/test-classes netcafe.SessionEndChecks
 java -cp target/classes netcafe.Demo.EarlyEndDemo
 ```
 
-Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy bốn chương trình kiểm tra độc lập này.
+Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.
 
 ## Chạy trực tiếp bằng PowerShell
 
@@ -84,6 +85,7 @@ Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở l
 .\run.ps1 -AccountChecks
 .\run.ps1 -EarlyEndDemo
 .\run.ps1 -EarlyEndChecks
+.\run.ps1 -SessionEndChecks
 ```
 
 Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Không cần thư viện ngoài.
@@ -125,7 +127,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản và 78 kiểm tra kết thúc/thanh toán, tổng cộng 217 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra mới bao gồm kết thúc trực tiếp trên model, gọi món thất bại và bảo vệ trạng thái máy.
+Đã biên dịch toàn bộ mã nguồn bằng JDK của IntelliJ với `javac --release 8`. Chạy trực tiếp NetCafeChecks (43), DiscountChecks (42), AccountChecks (54), EarlyEndChecks (78) và SessionEndChecks (135), tổng cộng 352 kiểm tra đều qua. Kết quả Main khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công. Các kiểm tra bao gồm kết thúc trực tiếp trên model, gọi món thất bại, bảo vệ trạng thái máy và tính đủ món ghi trực tiếp vào phiên.
 
 ## Tài khoản khách hàng
 
@@ -154,6 +156,8 @@ Phạm vi hiện tại là lưu thông tin tài khoản và kiểm tra khi mở 
 Khi khách muốn nghỉ, gọi endSession với giờ nghỉ thực tế, rồi lập hóa đơn và thanh toán. timeEnd ban đầu là null; khi kết thúc, nó ghi giờ nghỉ thực tế và máy được giải phóng. Tiền máy được tính theo thời lượng thực tế; không đăng ký giờ kết thúc trước.
 
 Giờ bắt đầu và kết thúc có thể nhập để mô phỏng; không cần chờ thời gian trôi qua. `SessionService.endSession` kiểm tra phiên thuộc quán rồi gọi `Session.endSession`. Model tự kiểm tra phiên ACTIVE, giờ kết thúc sau giờ bắt đầu và không trước bất kỳ lần gọi món nào. Gọi trực tiếp trên model cũng thực hiện các kiểm tra này và cập nhật máy. Máy giữ phiên đang sử dụng nó; không thể đổi trạng thái thủ công khi đang có phiên hoặc gán `IN_USE` bằng setter.
+
+`Session.recordFoodService()` kiểm tra, khóa và liên kết đơn món với phiên. Khi lập hóa đơn, ReceiptService lấy các đơn đã ghi nhận từ `session.getFoodServices()` để tính tiền đầy đủ. Trong ứng dụng, dùng `cafe.order()` để có thêm kiểm tra món/nhân viên đã đăng ký và cập nhật danh sách gọi món toàn quán.
 
 ```java
 LocalDateTime start = LocalDateTime.of(2026, 10, 5, 3, 0);

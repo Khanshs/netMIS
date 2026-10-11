@@ -54,7 +54,7 @@ public final class FoodOrderService {
             registered(data.foods, items[i]);
             service.addItem(items[i], quantities[i], prices[i]);
         }
-        service.seal();
+        session.recordFoodService(service);
         data.services.add(service);
         return service;
     }

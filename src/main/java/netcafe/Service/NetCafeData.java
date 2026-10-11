@@ -1,6 +1,8 @@
 package netcafe.Service;
 
 import netcafe.model.*;
+import netcafe.model.NET.*;
+
 import java.util.ArrayList;
 import java.util.List;
 

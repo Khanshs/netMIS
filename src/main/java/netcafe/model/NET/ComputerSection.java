@@ -1,5 +1,7 @@
-package netcafe.model;
+package netcafe.model.NET;
 import netcafe.Identifiable;
+import netcafe.model.Checks;
+
 import java.math.BigDecimal;
 
 public final class ComputerSection implements Identifiable {

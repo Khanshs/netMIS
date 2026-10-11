@@ -1,10 +1,14 @@
-package netcafe.model;
+package netcafe.model.NET;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.enums.SessionStatus;
 import netcafe.exception.DuplicateIdException;
 import netcafe.exception.InvalidTimeException;
 import netcafe.exception.SessionStateException;
+import netcafe.model.Checks;
+import netcafe.model.CustomerAccount;
+import netcafe.model.FoodService;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -25,7 +29,7 @@ public final class Session implements Identifiable, Chargeable {
 
   //Constructor
   public Session(String id, CustomerAccount account, Computer computer, LocalDateTime start) {
-    sessionId=Checks.id(id);
+    sessionId= Checks.id(id);
     this.account=Checks.required(account, "account");
     this.computer=Checks.required(computer, "computer");
     timeStart=Checks.required(start, "start");

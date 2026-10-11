@@ -2,6 +2,10 @@ package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.exception.InvalidOrderException;
+import netcafe.model.NET.Employee;
+import netcafe.model.NET.Food;
+import netcafe.model.NET.Session;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

@@ -5,9 +5,11 @@ import netcafe.IDiscount;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NET.Employee;
+import netcafe.model.NET.Session;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
+
 import static netcafe.Service.ServiceChecks.*;
 
 public final class ReceiptService {

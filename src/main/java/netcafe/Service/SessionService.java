@@ -3,6 +3,9 @@ package netcafe.Service;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NET.Computer;
+import netcafe.model.NET.Session;
+
 import java.time.LocalDateTime;
 import static netcafe.Service.ServiceChecks.*;
 

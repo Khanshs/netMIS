@@ -1,8 +1,9 @@
-package netcafe.model;
+package netcafe.model.NET;
 import netcafe.Identifiable;
 import netcafe.enums.ComputerStatus;
 import netcafe.exception.ComputerUnavailableException;
 import netcafe.exception.SessionStateException;
+import netcafe.model.Checks;
 
 public final class Computer implements Identifiable {
   // Attribute
@@ -16,6 +17,7 @@ public final class Computer implements Identifiable {
     this.section = Checks.required(section, "section");
     this.computerStatus = Checks.required(status, "status");
   }
+
   // Constructor
   // Getter implements Identifiable
   public String getId() { return computerId; }

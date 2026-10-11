@@ -4,6 +4,8 @@ import netcafe.Service.NetCafe;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NET.Computer;
+import netcafe.model.NET.Session;
 import netcafe.model.customer.NormalCustomer;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -4,6 +4,9 @@ import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.IDiscount;
 import netcafe.exception.ValidationException;
+import netcafe.model.NET.Employee;
+import netcafe.model.NET.Session;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 

@@ -88,7 +88,7 @@ public final class NetCafeChecks {
         cafe.getPaymentService().pay("P02", finalReceipt, time(12, 0), PaymentMethod.BANK_TRANSFER, finalReceipt.getTotalAmount());
         equal(120000, cafe.collectedAmount());
         Session rounding = new Session("S99", cafe.getAccounts().get(3), cafe.getComputers().get(0), time(13, 0));
-        rounding.complete(time(13, 0).plusSeconds(1));
+        rounding.endSession(time(13, 0).plusSeconds(1));
         equal(3, rounding.calculateAmount());
         System.out.println("NetCafeChecks OK: " + checks + " checks");
     }

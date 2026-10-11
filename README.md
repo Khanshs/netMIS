@@ -18,6 +18,7 @@ Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ c
 7. Chạy `DiscountDemo.main()` để so sánh Normal/Member/VIP; chạy `DiscountChecks.main()` để kiểm tra chính sách giảm giá.
 8. Chạy `AccountChecks.main()` để kiểm tra tài khoản, đăng ký và mở phiên theo tài khoản.
 9. Chạy `EarlyEndDemo.main()` để xem khách nghỉ lúc 4h30 sau khi bắt đầu lúc 3h; chạy `EarlyEndChecks.main()` để kiểm tra kết thúc và thanh toán theo giờ thực tế.
+10. Chạy `SessionEndChecks.main()` để kiểm tra kết thúc qua service và trực tiếp trên phiên, liên kết đơn món và trạng thái sau thao tác thất bại.
 
 ## Cấu trúc
 
@@ -43,7 +44,7 @@ NetCafeMIS/
     │   ├── enums/      # 5 enum, gồm AccountStatus
     │   ├── Service/    # Các lớp điều phối nghiệp vụ
     │   └── exception/  # 14 loại lỗi nghiệp vụ và EXCEPTIONS.md
-    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks
+    └── test/java/netcafe/  # NetCafeChecks, DiscountChecks, AccountChecks, EarlyEndChecks, SessionEndChecks
 ```
 
 Package `netcafe.Service` gom các service theo chức năng:
@@ -68,10 +69,11 @@ java -cp target/classes:target/test-classes netcafe.NetCafeChecks
 java -cp target/classes:target/test-classes netcafe.DiscountChecks
 java -cp target/classes:target/test-classes netcafe.AccountChecks
 java -cp target/classes:target/test-classes netcafe.EarlyEndChecks
+java -cp target/classes:target/test-classes netcafe.SessionEndChecks
 java -cp target/classes netcafe.EarlyEndDemo
 ```
 
-Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy bốn chương trình kiểm tra độc lập này.
+Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.
 
 ## Chạy trực tiếp bằng PowerShell
 
@@ -84,6 +86,7 @@ Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở l
 .\run.ps1 -AccountChecks
 .\run.ps1 -EarlyEndDemo
 .\run.ps1 -EarlyEndChecks
+.\run.ps1 -SessionEndChecks
 ```
 
 Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Không cần thư viện ngoài.
@@ -125,7 +128,7 @@ Luồng hiện tại tạo khách ở một hạng cố định. Đổi đối t
 
 ## Kiểm chứng
 
-Đã chạy Maven 3.9.9 `clean package` với JDK 21 và `-Dmaven.compiler.release=8`: build thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản và 40 kiểm tra kết thúc/thanh toán theo giờ thực tế, tổng cộng 179 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
+Đã build bằng Maven 3.9.9 với JDK 21 và `-Dmaven.compiler.release=8` thành công. Chạy trực tiếp 43 kiểm tra nghiệp vụ, 42 kiểm tra giảm giá/kế thừa, 54 kiểm tra tài khoản, 40 kiểm tra kết thúc/thanh toán theo giờ thực tế và 130 kiểm tra kết thúc phiên qua cả hai API, tổng cộng 309 kiểm tra đều qua. JAR cho kết quả khớp `EXPECTED_OUTPUT.txt`; `DiscountDemo`, `ExceptionDemo` và `EarlyEndDemo` chạy thành công.
 
 ## Tài khoản khách hàng
 
@@ -152,6 +155,8 @@ Phạm vi hiện tại là lưu thông tin tài khoản và kiểm tra khi mở 
 ## Kết thúc phiên khi khách muốn nghỉ
 
 Khi khách muốn nghỉ, gọi endSession với giờ nghỉ thực tế, rồi lập hóa đơn và thanh toán. timeEnd ban đầu là null; khi kết thúc, nó ghi giờ nghỉ thực tế và máy được giải phóng. Tiền máy được tính theo thời lượng thực tế; không đăng ký giờ kết thúc trước.
+
+`Session` giữ danh sách các lần gọi món đã khóa; `getFoodServices()` chỉ cho đọc. `cafe.endSession(session, end)` kiểm tra phiên thuộc quán rồi gọi `session.endSession(end)`. Cả hai cách đều kiểm tra phiên ACTIVE, end sau start và không có đơn món sau end trước khi cập nhật phiên và máy. Ví dụ S04 bắt đầu 11:00, gọi món 11:15: kết thúc 11:01 bị từ chối và giữ nguyên trạng thái; kết thúc 12:00 thành công, máy AVAILABLE. Phương thức `complete()` đã được bỏ.
 
 ```java
 Session session = cafe.openSession("S01", account, computer, start);

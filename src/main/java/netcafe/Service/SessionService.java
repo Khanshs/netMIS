@@ -43,19 +43,7 @@ public final class SessionService {
 
     public void endSession(Session session, LocalDateTime end) {
         registered(data.sessions, session);
-        if (session.getSessionStatus() != SessionStatus.ACTIVE) {
-            throw new SessionStateException("Session already completed: " + session.getId());
-        }
-        if (end == null || !end.isAfter(session.getTimeStart())) {
-            throw new InvalidTimeException("End must be after start");
-        }
-        for (FoodService service : data.services) {
-            if (service.getSession() == session && service.getTimeStartService().isAfter(end)) {
-                throw new InvalidTimeException("Order occurs after proposed session end");
-            }
-        }
-        session.complete(end);
-        session.getComputer().setComputerStatus(ComputerStatus.AVAILABLE);
+        session.endSession(end);
     }
 }
 

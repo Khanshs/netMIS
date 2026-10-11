@@ -14,6 +14,7 @@ Tài liệu này mô tả hai model quan trọng trong hệ thống quản lý q
 - `timeStart`: thời điểm bắt đầu phiên.
 - `timeEnd`: thời điểm khách nghỉ thực tế (null nếu phiên chưa hoàn tất); dùng để tính tiền và kiểm tra thanh toán.
 - `sessionStatus`: trạng thái phiên, ví dụ `ACTIVE` hoặc `COMPLETED`.
+- `foodServices`: danh sách các lần gọi món đã ghi nhận của chính phiên; bên ngoài chỉ được đọc.
 
 ### Constructor
 ```java
@@ -31,11 +32,19 @@ public Session(String id, CustomerAccount account, Computer computer, LocalDateT
 - `getTimeStart()`, `getTimeEnd()`: lấy thời điểm bắt đầu/kết thúc.
 - `getSessionStatus()`: lấy trạng thái phiên.
 
-#### `complete(LocalDateTime end)`
+#### `recordFoodService(FoodService service)`
+- Kiểm tra đơn không null, phiên đang `ACTIVE`, đơn thuộc đúng phiên, giờ gọi không trước giờ bắt đầu và mã đơn chưa trùng trong phiên.
+- Gọi `service.seal()` để yêu cầu ít nhất một món và khóa đơn, rồi mới thêm vào danh sách của phiên.
+- `FoodOrderService` gọi phương thức này sau khi kiểm tra và tạo đủ các dòng món; cùng đối tượng đơn được lưu vào danh sách toàn quán.
+- `getFoodServices()` trả về danh sách chỉ đọc, không cho thêm hoặc xóa trực tiếp.
+
+#### `endSession(LocalDateTime end)`
 - Chỉ cho phép kết thúc phiên nếu trạng thái hiện tại là `ACTIVE`.
 - Kiểm tra thời điểm kết thúc phải khác null và phải sau thời điểm bắt đầu.
-- Nếu hợp lệ thì đặt `timeEnd` và đổi trạng thái thành `COMPLETED`.
+- Kiểm tra không có lần gọi món đã ghi nhận nào xảy ra sau thời điểm kết thúc.
+- Nếu hợp lệ thì đặt `timeEnd`, đổi trạng thái thành `COMPLETED` và chuyển máy thành `AVAILABLE`.
 - Nếu không hợp lệ sẽ ném ra ngoại lệ tương ứng (`SessionStateException`, `InvalidTimeException`).
+- Mọi kiểm tra diễn ra trước khi đổi trạng thái. Gọi trực tiếp trên phiên hoặc qua `SessionService` đều dùng các quy tắc này; `complete()` đã được bỏ.
 
 #### `amountAt(LocalDateTime at)`
 - Tính số tiền phát sinh đến thời điểm `at`.
@@ -118,6 +127,7 @@ public FoodService(String id, Session session, Employee employee, LocalDateTime 
 - `FoodService` đại diện cho dịch vụ đồ ăn trong thời gian đó.
 - Một `Session` có thể có nhiều `FoodService` liên quan (nếu khách hàng đặt đồ ăn trong quá trình sử dụng máy).
 - `FoodService` giữ tham chiếu tới `Session`, cho thấy đơn hàng này được tạo trong phiên nào.
+- `Session` giữ danh sách các đơn đã khóa để tự kiểm tra giờ kết thúc, kể cả khi gọi trực tiếp `session.endSession(end)`.
 
 ## Kết luận
 `Session` tập trung vào việc quản lý thời gian và phí sử dụng máy tính. `FoodService` tập trung vào việc quản lý danh sách món ăn, tính toán tổng tiền mua hàng và bảo vệ dữ liệu đơn hàng khỏi việc sửa đổi sau khi xác nhận. Cả hai model cùng đóng vai trò then chốt trong xử lý nghiệp vụ của hệ thống quán net.

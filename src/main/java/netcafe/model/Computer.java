@@ -7,12 +7,13 @@ public final class Computer implements Identifiable {
   private final String computerId;
   private final ComputerSection section;
   private ComputerStatus computerStatus;
-  // Constructor
+
   public Computer(String id, ComputerSection section, ComputerStatus status) {
     this.computerId = Checks.id(id);
     this.section = Checks.required(section, "section");
     this.computerStatus = Checks.required(status, "status");
   }
+  // Constructor
   // Getter implements Identifiable
   public String getId() { return computerId; }
   public String getComputerId() { return computerId; }

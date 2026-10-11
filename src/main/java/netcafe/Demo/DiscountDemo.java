@@ -1,4 +1,4 @@
-package netcafe;
+package netcafe.Demo;
 
 import netcafe.Service.NetCafe;
 import netcafe.model.customer.*;

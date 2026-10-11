@@ -107,6 +107,7 @@ public final class EarlyEndChecks {
         equal(50000, late.cafe.collectedAmount());
 
         Fixture ordered = new Fixture(new NormalCustomer("C04", "Food order"));
+
         Session orderedSession = ordered.open();
         Food food = new Food("F01", "Combo", BigDecimal.valueOf(10000));
         ordered.cafe.addFood(food);
@@ -119,7 +120,10 @@ public final class EarlyEndChecks {
         ordered.cafe.endSession(orderedSession, orderTime);
         equal(43333, ordered.cafe.issueReceipt("R01", orderedSession, ordered.employee).getTotalAmount());
 
-        Customer[] tiers = {new MemberCustomer("C05", "Member"), new VipCustomer("C06", "VIP")};
+        Customer[] tiers = {
+                new MemberCustomer("C05", "Member"),
+                new VipCustomer("C06", "VIP")};
+
         long[] expected = {27000, 25500};
         for (int i = 0; i < tiers.length; i++) {
             Fixture discounted = new Fixture(tiers[i]);

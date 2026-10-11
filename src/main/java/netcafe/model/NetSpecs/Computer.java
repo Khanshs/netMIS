@@ -1,6 +1,7 @@
-package netcafe.model;
+package netcafe.model.NetSpecs;
 import netcafe.Identifiable;
 import netcafe.enums.ComputerStatus;
+import netcafe.model.Checks;
 
 public final class Computer implements Identifiable {
   // Attribute

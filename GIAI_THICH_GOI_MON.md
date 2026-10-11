@@ -117,7 +117,7 @@ Với project này, nên giữ cả hai lớp để bám theo ERD và truy vết
 
 | Lớp | Vai trò trong code |
 |---|---|
-| netcafe.model.FoodService | Đối tượng dữ liệu của một lần gọi món |
+| netcafe.Service.FoodService | Đối tượng dữ liệu của một lần gọi món |
 | netcafe.Service.FoodOrderService | Điều phối thao tác gọi món: kiểm tra phiên, nhân viên, món, dữ liệu và ghi nhận đơn |
 
 FoodOrderService tạo và quản lý các FoodService. Một Session có thể có nhiều FoodService, và mỗi FoodService chứa ít nhất một FoodOrderDetail khi được ghi nhận.

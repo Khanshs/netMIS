@@ -2,6 +2,8 @@ package netcafe.model;
 
 import netcafe.Identifiable;
 import netcafe.enums.AccountStatus;
+import netcafe.model.customer.Customer;
+
 import java.math.BigDecimal;
 
 /** Login information and balance, separate from the owner's discount tier. */

@@ -1,7 +1,13 @@
-package netcafe.model;
+package netcafe.Service;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.exception.InvalidOrderException;
+import netcafe.model.Checks;
+import netcafe.model.NetSpecs.Employee;
+import netcafe.model.FoodOrderDetail;
+import netcafe.model.NetSpecs.Food;
+import netcafe.model.Session;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,7 +26,7 @@ public final class FoodService implements Identifiable, Chargeable {
 
   // Constructor
   public FoodService(String id, Session session, Employee employee, LocalDateTime time) {
-    serviceId=Checks.id(id);
+    serviceId= Checks.id(id);
     this.session=Checks.required(session, "session");
     this.employee=Checks.required(employee, "employee");
     timeStartService=Checks.required(time, "time");

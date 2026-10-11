@@ -1,6 +1,9 @@
-package netcafe.Service;
+package netcafe.model.NetSpecs;
 
+import netcafe.Service.FoodService;
 import netcafe.model.*;
+import netcafe.model.customer.Customer;
+
 import java.util.ArrayList;
 import java.util.List;
 

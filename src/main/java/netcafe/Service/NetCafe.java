@@ -1,14 +1,16 @@
 package netcafe.Service;
 
 import netcafe.enums.*;
-import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NetSpecs.*;
+import netcafe.model.customer.Customer;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-
 /** Provides one shared data context and its business services. */
 public final class NetCafe {
+    // Attribute
     private final NetCafeData data = new NetCafeData();
     private final CatalogService catalogService = new CatalogService(data);
     private final SessionService sessionService = new SessionService(data);
@@ -16,12 +18,14 @@ public final class NetCafe {
     private final ReceiptService receiptService = new ReceiptService(data);
     private final PaymentService paymentService = new PaymentService(data);
 
+    // Getter
     public CatalogService getCatalogService() { return catalogService; }
     public SessionService getSessionService() { return sessionService; }
     public FoodOrderService getFoodOrderService() { return foodOrderService; }
     public ReceiptService getReceiptService() { return receiptService; }
     public PaymentService getPaymentService() { return paymentService; }
 
+    // Method
     public void addSection(ComputerSection value) { catalogService.addSection(value); }
     public void addComputer(Computer value) { catalogService.addComputer(value); }
     public void addCustomer(Customer value) { catalogService.addCustomer(value); }
@@ -56,7 +60,6 @@ public final class NetCafe {
     }
 
     public BigDecimal collectedAmount() { return paymentService.collectedAmount(); }
-
     public List<ComputerSection> getSections() { return Collections.unmodifiableList(data.sections); }
     public List<Computer> getComputers() { return Collections.unmodifiableList(data.computers); }
     public List<Customer> getCustomers() { return Collections.unmodifiableList(data.customers); }

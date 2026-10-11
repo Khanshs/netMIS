@@ -1,9 +1,10 @@
-package netcafe;
+package netcafe.Checks;
 
 import netcafe.Service.NetCafe;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NetSpecs.*;
 import netcafe.model.customer.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

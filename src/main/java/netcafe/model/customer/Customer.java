@@ -1,7 +1,9 @@
-package netcafe.model;
+package netcafe.model.customer;
 
 import netcafe.Identifiable;
 import netcafe.IDiscount;
+import netcafe.model.Checks;
+
 import java.math.BigDecimal;
 
 /** Common customer data; each subclass supplies its own discount rates. */

@@ -65,12 +65,12 @@ Package `netcafe.Service` gom các service theo chức năng:
 ```text
 mvn package
 java -jar target/netcafe-mis-1.0.0.jar
-java -cp target/classes:target/test-classes netcafe.NetCafeChecks
-java -cp target/classes:target/test-classes netcafe.DiscountChecks
-java -cp target/classes:target/test-classes netcafe.AccountChecks
-java -cp target/classes:target/test-classes netcafe.EarlyEndChecks
-java -cp target/classes:target/test-classes netcafe.SessionEndChecks
-java -cp target/classes netcafe.EarlyEndDemo
+java -cp target/classes:target/test-classes netcafe.Checks.NetCafeChecks
+java -cp target/classes:target/test-classes netcafe.Checks.DiscountChecks
+java -cp target/classes:target/test-classes netcafe.Checks.AccountChecks
+java -cp target/classes:target/test-classes netcafe.Checks.EarlyEndChecks
+java -cp target/classes:target/test-classes netcafe.Checks.SessionEndChecks
+java -cp target/classes netcafe.Demo.EarlyEndDemo
 ```
 
 Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở lên, có thể dùng `mvn -Dmaven.compiler.release=8 package` để kiểm tra tương thích API Java 8. Maven Surefire không tự chạy năm chương trình kiểm tra độc lập này.

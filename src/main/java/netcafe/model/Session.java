@@ -1,12 +1,15 @@
 package netcafe.model;
 import netcafe.Chargeable;
 import netcafe.Identifiable;
+import netcafe.Service.FoodService;
 import netcafe.enums.ComputerStatus;
 import netcafe.enums.SessionStatus;
 import netcafe.exception.DuplicateIdException;
 import netcafe.exception.InvalidOrderException;
 import netcafe.exception.InvalidTimeException;
 import netcafe.exception.SessionStateException;
+import netcafe.model.NetSpecs.Computer;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;

@@ -4,11 +4,14 @@ import netcafe.Chargeable;
 import netcafe.Identifiable;
 import netcafe.IDiscount;
 import netcafe.exception.ValidationException;
+import netcafe.model.NetSpecs.Employee;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /** Gross amounts, applied rates and discounts are frozen when issued. */
 public final class Receipt implements Identifiable, Chargeable {
+    // Attribute
     private final String receiptId;
     private final Session session;
     private final Employee employee;
@@ -18,14 +21,12 @@ public final class Receipt implements Identifiable, Chargeable {
     private final BigDecimal serviceDiscountAmount, computerDiscountAmount;
     private final BigDecimal serviceAmount, computerAmount;
 
-    public Receipt(String id, Session session, Employee employee,
-                   BigDecimal serviceAmount, BigDecimal computerAmount) {
+    public Receipt(String id, Session session, Employee employee, BigDecimal serviceAmount, BigDecimal computerAmount) {
         this(id, session, employee, serviceAmount, computerAmount,
              Checks.required(session, "session").getAccount().getCustomer());
     }
 
-    public Receipt(String id, Session session, Employee employee,
-                   BigDecimal grossServiceAmount, BigDecimal grossComputerAmount, IDiscount policy) {
+    public Receipt(String id, Session session, Employee employee, BigDecimal grossServiceAmount, BigDecimal grossComputerAmount, IDiscount policy) {
         receiptId = Checks.id(id);
         this.session = Checks.required(session, "session");
         this.employee = Checks.required(employee, "employee");
@@ -33,8 +34,10 @@ public final class Receipt implements Identifiable, Chargeable {
         customerTier = Checks.name(policy.getTierName());
         computerDiscountRate = rate(policy.getComputerDiscountRate());
         serviceDiscountRate = rate(policy.getFoodDiscountRate());
+
         this.grossServiceAmount = Checks.money(grossServiceAmount);
         this.grossComputerAmount = Checks.money(grossComputerAmount);
+
         serviceDiscountAmount = discount(this.grossServiceAmount, serviceDiscountRate);
         computerDiscountAmount = discount(this.grossComputerAmount, computerDiscountRate);
         serviceAmount = this.grossServiceAmount.subtract(serviceDiscountAmount);

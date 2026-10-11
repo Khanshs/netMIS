@@ -1,9 +1,14 @@
-package netcafe;
+package netcafe.Checks;
 
+import netcafe.Main;
+import netcafe.Service.FoodService;
 import netcafe.Service.NetCafe;
 import netcafe.enums.*;
 import netcafe.exception.*;
 import netcafe.model.*;
+import netcafe.model.NetSpecs.Employee;
+import netcafe.model.NetSpecs.Food;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;

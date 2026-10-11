@@ -1,6 +1,11 @@
-package netcafe;
+package netcafe.Checks;
 
+import netcafe.Demo.DiscountDemo;
+import netcafe.IDiscount;
+import netcafe.Main;
 import netcafe.Service.NetCafe;
+import netcafe.model.customer.Customer;
+import netcafe.model.NetSpecs.Employee;
 import netcafe.model.customer.*;
 import netcafe.enums.*;
 import netcafe.exception.*;

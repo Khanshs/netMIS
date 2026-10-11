@@ -29,13 +29,13 @@ $sources = @(Get-ChildItem (Join-Path $PSScriptRoot 'src') -Recurse -Filter '*.j
 & $compilerPath -source 8 -target 8 -encoding UTF-8 -Xlint:-options -d $outputPath @sources
 if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
 $mainClass = 'netcafe.Main'
-if ($Checks) { $mainClass = 'netcafe.NetCafeChecks' }
-if ($ExceptionDemo) { $mainClass = 'netcafe.ExceptionDemo' }
-if ($DiscountDemo) { $mainClass = 'netcafe.DiscountDemo' }
-if ($DiscountChecks) { $mainClass = 'netcafe.DiscountChecks' }
-if ($AccountChecks) { $mainClass = 'netcafe.AccountChecks' }
-if ($EarlyEndDemo) { $mainClass = 'netcafe.EarlyEndDemo' }
-if ($EarlyEndChecks) { $mainClass = 'netcafe.EarlyEndChecks' }
-if ($SessionEndChecks) { $mainClass = 'netcafe.SessionEndChecks' }
+if ($Checks) { $mainClass = 'netcafe.Checks.NetCafeChecks' }
+if ($ExceptionDemo) { $mainClass = 'netcafe.Demo.ExceptionDemo' }
+if ($DiscountDemo) { $mainClass = 'netcafe.Demo.DiscountDemo' }
+if ($DiscountChecks) { $mainClass = 'netcafe.Checks.DiscountChecks' }
+if ($AccountChecks) { $mainClass = 'netcafe.Checks.AccountChecks' }
+if ($EarlyEndDemo) { $mainClass = 'netcafe.Demo.EarlyEndDemo' }
+if ($EarlyEndChecks) { $mainClass = 'netcafe.Checks.EarlyEndChecks' }
+if ($SessionEndChecks) { $mainClass = 'netcafe.Checks.SessionEndChecks' }
 & $runnerPath -cp $outputPath $mainClass
 if ($LASTEXITCODE -ne 0) { throw 'Program failed.' }

@@ -1,6 +1,5 @@
 package netcafe.model.customer;
 
-import netcafe.model.Customer;
 import java.math.BigDecimal;
 
 public final class NormalCustomer extends Customer {

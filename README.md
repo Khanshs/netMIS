@@ -1,6 +1,6 @@
 # NetCafeMIS — Quản lý quán net
 
-Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ chức SmartDorm và các thực thể trong đặc tả. Mỗi class, interface và enum nằm trong một file riêng. Dữ liệu dùng List<T> trong bộ nhớ.
+Project Maven Java 8 chạy console trên IntelliJ IDEA, dựa theo cách tổ chức SmartDorm và các thực thể trong đặc tả. Mỗi class, interface và enum nằm trong một file riêng. `Main` dùng List<T> trong bộ nhớ; `JdbcDemo` là ví dụ MySQL riêng cho khu máy, máy tính và Billing.
 
 ## Clone và mở bằng IntelliJ IDEA
 
@@ -30,12 +30,19 @@ NetCafeMIS/
 ├── EXPECTED_OUTPUT.txt
 ├── Dac_ta_quan_ly_quan_net.md
 ├── run.ps1
+├── examples/billing_demo.sql
+├── examples/customer_accounts.sql
+├── examples/full_mis_schema.sql
+├── TRUY_VAN_30_SQL.md
 └── src/
     ├── main/java/netcafe/
     │   ├── Main.java
+    │   ├── JdbcDemo.java
     │   ├── Identifiable.java
     │   ├── Chargeable.java
     │   ├── IDiscount.java
+    │   ├── dao/        # DAO JDBC cho khu, máy, khách, tài khoản và Billing
+    │   ├── database/   # Mở kết nối MySQL từ biến môi trường
     │   ├── model/      # Session, CustomerAccount, FoodOrderDetail, Receipt, Payment, Checks
     │   │   ├── NetSpecs/ # Computer, ComputerSection, Employee, Food
     │   │   └── customer/ # Customer, NormalCustomer, MemberCustomer, VipCustomer
@@ -91,13 +98,35 @@ Trên Windows, dùng dấu `;` thay cho `:` trong classpath. Với JDK 9 trở l
 .\run.ps1 -SessionEndChecks
 ```
 
-Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Không cần thư viện ngoài.
+Script tìm javac/java từ JAVA_HOME, PATH hoặc JDK đi kèm IntelliJ. Có thể truyền thư mục JDK bằng `-JavaHome 'C:\path\to\jdk'`. Các chương trình dùng dữ liệu trong bộ nhớ không cần MySQL.
+
+## Thử DAO và kết nối MySQL
+
+Đây là ví dụ JDBC dựa trên `student-crud-jdbc`, **chưa thay thế các Service dùng List**. File `examples/billing_demo.sql` tạo database demo, bảng khu/máy, bảng điều kiện rút gọn cho phiên/nhân viên, hóa đơn, thanh toán và dữ liệu mẫu. Chạy file này trong MySQL trước khi chạy Java; có thể chạy lại mà không xóa bảng hoặc dữ liệu đã có.
+
+Trong IntelliJ, import lại Maven để tải MySQL Connector/J, tạo Run Configuration cho `netcafe.JdbcDemo` và đặt ba biến môi trường:
+
+```text
+NETCAFE_DB_URL=jdbc:mysql://localhost:3306/netcafe_billing_demo
+NETCAFE_DB_USER=<tài khoản MySQL của bạn>
+NETCAFE_DB_PASSWORD=<mật khẩu MySQL của bạn>
+```
+
+Không đưa giá trị thật vào code hoặc Git. Chạy `JdbcDemo` không có argument để đọc khu, máy, hóa đơn chưa trả và doanh thu đã thu từ MySQL. Thêm program argument `--add-computer` để lưu thử khu `CS03` và máy `PC07` trong cùng một transaction. Dùng `--write-billing` để lấy dữ liệu từ `Main.sample()`, lưu hóa đơn `R03` cho phiên `S03` và thanh toán `P02` cho hóa đơn `R02` trong một transaction. Hai thao tác mẫu đều kiểm tra bản ghi đã có trước khi thêm, nên có thể chạy lại.
+
+Sau khi chạy SQL và trước các thao tác ghi, kết quả JDBC cần có `Sections=2`, `R01 total=49000 paid=true`, `Unpaid: R02 total=60000` và `Collected=49000`. Sau `--write-billing`, `R02` được trả, `R03` chưa trả và `Collected=109000`. Nếu kết nối bị từ chối, kiểm tra MySQL đã chạy ở cổng 3306 và ba biến môi trường của Run Configuration.
+
+`ComputerSectionDAO` và `ComputerDAO` minh họa CRUD/JOIN. `ReceiptDAO` và `PaymentDAO` minh họa lưu hóa đơn/thanh toán và đọc kết quả Billing. Các DAO nhận cùng `Connection` từ lớp điều phối khi một thao tác cần transaction. Các bảng `sessions` và `employees` trong ví dụ được rút gọn; cần mở rộng schema và DAO cho phiên, nhân viên, món và gọi món trước khi chuyển toàn bộ luồng `Main` sang SQL.
+
+Để thử `CustomerDAO` và `CustomerAccountDAO`, chạy thêm `examples/customer_accounts.sql` trong Workbench trên cùng server. Sau đó chạy `JdbcDemo` với program argument `--customers`. Kết quả cho thấy hạng khách, tỷ lệ giảm tiền máy và tài khoản liên kết; chương trình không in `password_hash`. Hai DAO hỗ trợ thêm, tìm theo ID, liệt kê, cập nhật và xóa. `CustomerAccountDAO` còn tìm theo username. Các dòng hash trong SQL chỉ là dữ liệu giả để minh họa, không dùng cho đăng nhập.
+
+Để chạy đủ 30 câu SQL trong [`TRUY_VAN_30_SQL.md`](TRUY_VAN_30_SQL.md), tiếp tục chạy `examples/full_mis_schema.sql` sau hai file trên. File này bổ sung tài khoản và thời điểm bắt đầu cho phiên, trạng thái nhân viên, cùng các bảng món, lần gọi món, chi tiết món. Nó chỉ mở rộng database demo, có thể chạy lại và không chuyển các Service của `Main` sang JDBC. Các câu SQL là tài liệu thực hành MySQL; yêu cầu 10 câu mỗi thành viên bằng Java Lambda và C# LINQ vẫn cần triển khai riêng.
 
 ## Kết quả mẫu
 
 R01 = 24000 tiền máy + 25000 dịch vụ = **49000 VND**, đã trả. R02 = 30000 + 30000 = **60000 VND**, chưa trả. S03 hoàn tất chưa có hóa đơn; S04 đang hoạt động trên PC02. Tổng hóa đơn **109000 VND**, thực thu **49000 VND**. Xem `EXPECTED_OUTPUT.txt`.
 
-`src/main/java/netcafe/exception/EXCEPTIONS.md` mô tả các lỗi, nơi phát sinh và cách xử lý. `HUONG_DAN_NGHIEP_VU.md` giải thích luồng và OOP. Mục 4 chỉ yêu cầu đặc tả 30 truy vấn, chưa triển khai code truy vấn. Chạy lại sẽ khởi tạo lại dữ liệu; project chưa lưu file hay database.
+`src/main/java/netcafe/exception/EXCEPTIONS.md` mô tả các lỗi, nơi phát sinh và cách xử lý. `HUONG_DAN_NGHIEP_VU.md` giải thích luồng và OOP. Mục 4 của đặc tả đã có 30 ví dụ SQL trong tài liệu riêng, nhưng chưa có bản Java Lambda/C# LINQ tương ứng. Chạy lại `Main` sẽ khởi tạo lại dữ liệu trong bộ nhớ; `JdbcDemo` đọc và có thể ghi vào database demo riêng.
 
 ## Giảm giá theo hạng khách
 

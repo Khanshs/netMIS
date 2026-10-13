@@ -15,7 +15,7 @@ public final class FoodOrderDetail implements Chargeable {
 
   // Constructor
   public FoodOrderDetail(FoodService service, Food food, int quantity, BigDecimal price) {
-    this.service=Checks.required(service, "service");
+    this.service=Checks.  required(service, "service");
     this.food=Checks.required(food, "food");
     if (quantity <= 0)
       throw new InvalidOrderException("Quantity must be positive");
